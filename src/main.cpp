@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
     std::cin.get(c);
   }
 #ifndef HPCG_NO_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm);
 #endif
 #endif
 
@@ -295,7 +295,7 @@ int main(int argc, char * argv[]) {
 #ifndef HPCG_NO_MPI
 // Get the absolute worst time across all MPI ranks (time in CG can be different)
   double local_opt_worst_time = opt_worst_time;
-  MPI_Allreduce(&local_opt_worst_time, &opt_worst_time, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_opt_worst_time, &opt_worst_time, 1, MPI_DOUBLE, MPI_MAX, comm);
 #endif
 
 
