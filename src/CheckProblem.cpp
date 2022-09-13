@@ -47,7 +47,7 @@ using std::endl;
   @see GenerateGeometry
 */
 
-void CheckProblem(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact) {
+void CheckProblem(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact, MPI_Comm comm) {
 
   // Make local copies of geometry information.  Use global_int_t since the RHS products in the calculations
   // below may result in global range values.
@@ -132,10 +132,10 @@ void CheckProblem(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact) {
 #ifndef HPCG_NO_MPI
   // Use MPI's reduce function to sum all nonzeros
 #ifdef HPCG_NO_LONG_LONG
-  MPI_Allreduce(&localNumberOfNonzeros, &totalNumberOfNonzeros, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&localNumberOfNonzeros, &totalNumberOfNonzeros, 1, MPI_INT, MPI_SUM, comm);
 #else
   long long lnnz = localNumberOfNonzeros, gnnz = 0; // convert to 64 bit for MPI call
-  MPI_Allreduce(&lnnz, &gnnz, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&lnnz, &gnnz, 1, MPI_LONG_LONG_INT, MPI_SUM, comm);
   totalNumberOfNonzeros = gnnz; // Copy back
 #endif
 #else

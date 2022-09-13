@@ -17,5 +17,5 @@
 #include "SparseMatrix.hpp"
 #include "Vector.hpp"
 
-void CheckProblem(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact);
+void CheckProblem(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact, MPI_Comm comm);
 #endif // CHECKPROBLEM_HPP

@@ -151,7 +151,7 @@ int main(int argc, char * argv[]) {
   Vector * curx = &x;
   Vector * curxexact = &xexact;
   for (int level = 0; level< numberOfMgLevels; ++level) {
-     CheckProblem(*curLevelMatrix, curb, curx, curxexact);
+     CheckProblem(*curLevelMatrix, curb, curx, curxexact, comm);
      curLevelMatrix = curLevelMatrix->Ac; // Make the nextcoarse grid the next level
      curb = 0; // No vectors after the top level
      curx = 0;
