@@ -51,7 +51,7 @@ using std::endl;
   @see YAML_Doc
 */
 void ReportResults(const SparseMatrix & A, int numberOfMgLevels, int numberOfCgSets, int refMaxIters,int optMaxIters, double times[],
-    const TestCGData & testcg_data, const TestSymmetryData & testsymmetry_data, const TestNormsData & testnorms_data, int global_failure, bool quickPath) {
+    const TestCGData & testcg_data, const TestSymmetryData & testsymmetry_data, const TestNormsData & testnorms_data, int global_failure, bool quickPath, MPI_Comm comm) {
 
   double minOfficialTime = 1800; // Any official benchmark result must run at least this many seconds
 
@@ -60,9 +60,9 @@ void ReportResults(const SparseMatrix & A, int numberOfMgLevels, int numberOfCgS
   double t4min = 0.0;
   double t4max = 0.0;
   double t4avg = 0.0;
-  MPI_Allreduce(&t4, &t4min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-  MPI_Allreduce(&t4, &t4max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(&t4, &t4avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&t4, &t4min, 1, MPI_DOUBLE, MPI_MIN, comm);
+  MPI_Allreduce(&t4, &t4max, 1, MPI_DOUBLE, MPI_MAX, comm);
+  MPI_Allreduce(&t4, &t4avg, 1, MPI_DOUBLE, MPI_SUM, comm);
   t4avg = t4avg/((double) A.geom->size);
 #endif
 

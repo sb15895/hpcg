@@ -44,7 +44,7 @@
   @see ComputeDotProduct
 */
 int ComputeDotProduct_ref(const local_int_t n, const Vector & x, const Vector & y,
-    double & result, double & time_allreduce) {
+    double & result, double & time_allreduce, MPI_Comm comm) {
   assert(x.localLength>=n); // Test vector lengths
   assert(y.localLength>=n);
 
@@ -68,7 +68,7 @@ int ComputeDotProduct_ref(const local_int_t n, const Vector & x, const Vector & 
   double t0 = mytimer();
   double global_result = 0.0;
   MPI_Allreduce(&local_result, &global_result, 1, MPI_DOUBLE, MPI_SUM,
-      MPI_COMM_WORLD);
+      comm);
   result = global_result;
   time_allreduce += mytimer() - t0;
 #else
