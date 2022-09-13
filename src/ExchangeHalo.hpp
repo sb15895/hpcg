@@ -16,5 +16,5 @@
 #define EXCHANGEHALO_HPP
 #include "SparseMatrix.hpp"
 #include "Vector.hpp"
-void ExchangeHalo(const SparseMatrix & A, Vector & x);
+void ExchangeHalo(const SparseMatrix & A, Vector & x, MPI_Comm comm);
 #endif // EXCHANGEHALO_HPP
