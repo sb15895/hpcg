@@ -46,7 +46,7 @@
 
   @return Returns zero on success and a non-zero value otherwise.
 */
-int ComputeResidual(const local_int_t n, const Vector & v1, const Vector & v2, double & residual) {
+int ComputeResidual(const local_int_t n, const Vector & v1, const Vector & v2, double & residual, MPI_Comm comm) {
 
   double * v1v = v1.values;
   double * v2v = v2.values;
@@ -79,7 +79,7 @@ int ComputeResidual(const local_int_t n, const Vector & v1, const Vector & v2, d
 #ifndef HPCG_NO_MPI
   // Use MPI's reduce function to collect all partial sums
   double global_residual = 0;
-  MPI_Allreduce(&local_residual, &global_residual, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_residual, &global_residual, 1, MPI_DOUBLE, MPI_MAX, comm);
   residual = global_residual;
 #else
   residual = local_residual;

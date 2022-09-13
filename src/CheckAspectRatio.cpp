@@ -28,7 +28,7 @@
 #include "CheckAspectRatio.hpp"
 
 int
-CheckAspectRatio(double smallest_ratio, int x, int y, int z, const char *what, bool DoIo) {
+CheckAspectRatio(double smallest_ratio, int x, int y, int z, const char *what, bool DoIo, MPI_Comm comm) {
   double current_ratio = std::min(std::min(x, y), z) / double(std::max(std::max(x, y), z));
 
   if (current_ratio < smallest_ratio) { // ratio of the smallest to the largest
@@ -41,7 +41,7 @@ CheckAspectRatio(double smallest_ratio, int x, int y, int z, const char *what, b
     }
 
 #ifndef HPCG_NO_MPI
-    MPI_Abort(MPI_COMM_WORLD, 127);
+    MPI_Abort(comm, 127);
 #endif
 
     return 127;

@@ -65,7 +65,7 @@ startswith(const char * s, const char * prefix) {
   @see HPCG_Finalize
 */
 int
-HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params) {
+HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, MPI_Comm comm) {
   int argc = *argc_p;
   char ** argv = *argv_p;
   char fname[80];
@@ -114,7 +114,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params) {
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
   if (broadcastParams) {
-    MPI_Bcast( iparams, nparams, MPI_INT, 0, MPI_COMM_WORLD );
+    MPI_Bcast( iparams, nparams, MPI_INT, 0, comm );
   }
 #endif
 
@@ -132,8 +132,8 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params) {
   params.npz = iparams[9];
 
 #ifndef HPCG_NO_MPI
-  MPI_Comm_rank( MPI_COMM_WORLD, &params.comm_rank );
-  MPI_Comm_size( MPI_COMM_WORLD, &params.comm_size );
+  MPI_Comm_rank( comm, &params.comm_rank );
+  MPI_Comm_size( comm, &params.comm_size );
 #else
   params.comm_rank = 0;
   params.comm_size = 1;
