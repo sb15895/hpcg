@@ -27,6 +27,8 @@
 #include "GenerateGeometry.hpp"
 #include "GenerateProblem.hpp"
 #include "SetupHalo.hpp"
+#include "mpi.h"
+
 
 /*!
   Routine to construct a prolongation/restriction operator for a given fine grid matrix
@@ -38,13 +40,14 @@
 
 */
 
-void GenerateCoarseProblem(const SparseMatrix & Af, MPI_Comm comm) {
+void GenerateCoarseProblem(const SparseMatrix & Af) {
 
   // Make local copies of geometry information.  Use global_int_t since the RHS products in the calculations
   // below may result in global range values.
   global_int_t nxf = Af.geom->nx;
   global_int_t nyf = Af.geom->ny;
   global_int_t nzf = Af.geom->nz;
+	MPI_Comm comm = Af.comm; 
 
   local_int_t nxc, nyc, nzc; //Coarse nx, ny, nz
   assert(nxf%2==0); assert(nyf%2==0); assert(nzf%2==0); // Need fine grid dimensions to be divisible by 2
