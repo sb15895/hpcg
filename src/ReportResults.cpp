@@ -51,7 +51,9 @@ using std::endl;
   @see YAML_Doc
 */
 void ReportResults(const SparseMatrix & A, int numberOfMgLevels, int numberOfCgSets, int refMaxIters,int optMaxIters, double times[],
-    const TestCGData & testcg_data, const TestSymmetryData & testsymmetry_data, const TestNormsData & testnorms_data, int global_failure, bool quickPath, MPI_Comm comm) {
+    const TestCGData & testcg_data, const TestSymmetryData & testsymmetry_data, const TestNormsData & testnorms_data, int global_failure, bool quickPath) {
+
+	MPI_Comm comm = A.comm;	
 
   double minOfficialTime = 1800; // Any official benchmark result must run at least this many seconds
 

@@ -75,6 +75,8 @@ int CG(const SparseMatrix & A, CGData & data, const Vector & b, Vector & x,
   Vector & p = data.p; // Direction vector (in MPI mode ncol>=nrow)
   Vector & Ap = data.Ap;
 
+	MPI_Comm comm = A.comm; // MPI Comm added 	
+
   if (!doPreconditioning && A.geom->rank==0) HPCG_fout << "WARNING: PERFORMING UNPRECONDITIONED ITERATIONS" << std::endl;
 
 #ifdef HPCG_DEBUG
@@ -86,7 +88,7 @@ int CG(const SparseMatrix & A, CGData & data, const Vector & b, Vector & x,
   CopyVector(x, p);
   TICK(); ComputeSPMV(A, p, Ap); TOCK(t3); // Ap = A*p
   TICK(); ComputeWAXPBY(nrow, 1.0, b, -1.0, Ap, r, A.isWaxpbyOptimized);  TOCK(t2); // r = b - Ax (x stored in p)
-  TICK(); ComputeDotProduct(nrow, r, r, normr, t4, A.isDotProductOptimized); TOCK(t1);
+  TICK(); ComputeDotProduct(nrow, r, r, normr, t4, A.isDotProductOptimized, comm); TOCK(t1);
   normr = sqrt(normr);
 #ifdef HPCG_DEBUG
   if (A.geom->rank==0) HPCG_fout << "Initial Residual = "<< normr << std::endl;
@@ -107,20 +109,20 @@ int CG(const SparseMatrix & A, CGData & data, const Vector & b, Vector & x,
 
     if (k == 1) {
       TICK(); ComputeWAXPBY(nrow, 1.0, z, 0.0, z, p, A.isWaxpbyOptimized); TOCK(t2); // Copy Mr to p
-      TICK(); ComputeDotProduct (nrow, r, z, rtz, t4, A.isDotProductOptimized); TOCK(t1); // rtz = r'*z
+      TICK(); ComputeDotProduct (nrow, r, z, rtz, t4, A.isDotProductOptimized, comm); TOCK(t1); // rtz = r'*z
     } else {
       oldrtz = rtz;
-      TICK(); ComputeDotProduct (nrow, r, z, rtz, t4, A.isDotProductOptimized); TOCK(t1); // rtz = r'*z
+      TICK(); ComputeDotProduct (nrow, r, z, rtz, t4, A.isDotProductOptimized, comm); TOCK(t1); // rtz = r'*z
       beta = rtz/oldrtz;
       TICK(); ComputeWAXPBY (nrow, 1.0, z, beta, p, p, A.isWaxpbyOptimized);  TOCK(t2); // p = beta*p + z
     }
 
     TICK(); ComputeSPMV(A, p, Ap); TOCK(t3); // Ap = A*p
-    TICK(); ComputeDotProduct(nrow, p, Ap, pAp, t4, A.isDotProductOptimized); TOCK(t1); // alpha = p'*Ap
+    TICK(); ComputeDotProduct(nrow, p, Ap, pAp, t4, A.isDotProductOptimized, comm); TOCK(t1); // alpha = p'*Ap
     alpha = rtz/pAp;
     TICK(); ComputeWAXPBY(nrow, 1.0, x, alpha, p, x, A.isWaxpbyOptimized);// x = x + alpha*p
             ComputeWAXPBY(nrow, 1.0, r, -alpha, Ap, r, A.isWaxpbyOptimized);  TOCK(t2);// r = r - alpha*Ap
-    TICK(); ComputeDotProduct(nrow, r, r, normr, t4, A.isDotProductOptimized); TOCK(t1);
+    TICK(); ComputeDotProduct(nrow, r, r, normr, t4, A.isDotProductOptimized, comm); TOCK(t1);
     normr = sqrt(normr);
 #ifdef HPCG_DEBUG
     if (A.geom->rank==0 && (k%print_freq == 0 || k == max_iter))

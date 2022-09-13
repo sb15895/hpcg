@@ -47,7 +47,7 @@ using std::endl;
   @see GenerateGeometry
 */
 
-void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact, MPI_Comm comm) {
+void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact) {
 
   // Make local copies of geometry information.  Use global_int_t since the RHS products in the calculations
   // below may result in global range values.
@@ -60,6 +60,10 @@ void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexa
   global_int_t gix0 = A.geom->gix0;
   global_int_t giy0 = A.geom->giy0;
   global_int_t giz0 = A.geom->giz0;
+
+	// MPI Comm initialised 
+	MPI_Comm comm; 
+	comm = A.comm; 
 
   local_int_t localNumberOfRows = nx*ny*nz; // This is the size of our subblock
   // If this assert fails, it most likely means that the local_int_t is set to int and should be set to long long

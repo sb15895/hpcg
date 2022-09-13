@@ -22,6 +22,7 @@
 #define HPCG_HPP
 
 #include <fstream>
+#include <mpi.h>
 #include "Geometry.hpp"
 
 extern std::ofstream HPCG_fout;
@@ -46,7 +47,7 @@ struct HPCG_Params_STRUCT {
  */
 typedef HPCG_Params_STRUCT HPCG_Params;
 
-extern int HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params);
+extern int HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, MPI_Comm comm);
 extern int HPCG_Finalize(void);
 
 #endif // HPCG_HPP

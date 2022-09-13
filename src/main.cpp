@@ -76,9 +76,12 @@ int main(int argc, char * argv[]) {
   MPI_Init(&argc, &argv);
 #endif
 
+	MPI_Comm comm; 
+	MPI_Comm_dup(MPI_COMM_WORLD, &comm); 
+
   HPCG_Params params;
 
-  HPCG_Init(&argc, &argv, params);
+  HPCG_Init(&argc, &argv, params, comm);
 
   // Check if QuickPath option is enabled.
   // If the running time is set to zero, we minimize all paths through the program
@@ -105,8 +108,6 @@ int main(int argc, char * argv[]) {
   nz = (local_int_t)params.nz;
   int ierr = 0;  // Used to check return codes on function calls
 
-	MPI_Comm comm; 
-	MPI_Comm_dup(MPI_COMM_WORLD, &comm); 
 
   ierr = CheckAspectRatio(0.125, nx, ny, nz, "local problem", rank==0, comm);
   if (ierr)
@@ -254,7 +255,7 @@ int main(int argc, char * argv[]) {
   TestCG(A, data, b, x, testcg_data);
 
   TestSymmetryData testsymmetry_data;
-  TestSymmetry(A, b, xexact, testsymmetry_data, comm);
+  TestSymmetry(A, b, xexact, testsymmetry_data);
 
 #ifdef HPCG_DEBUG
   if (rank==0) HPCG_fout << "Total validation (TestCG and TestSymmetry) execution time in main (sec) = " << mytimer() - t1 << endl;

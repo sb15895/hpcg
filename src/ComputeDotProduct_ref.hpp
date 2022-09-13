@@ -15,7 +15,8 @@
 #ifndef COMPUTEDOTPRODUCT_REF_HPP
 #define COMPUTEDOTPRODUCT_REF_HPP
 #include "Vector.hpp"
+#include <mpi.h> 
 int ComputeDotProduct_ref(const local_int_t n, const Vector & x, const Vector & y,
-    double & result, double & time_allreduce);
+    double & result, double & time_allreduce, MPI_Comm comm);
 
 #endif // COMPUTEDOTPRODUCT_REF_HPP

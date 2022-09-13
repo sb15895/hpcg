@@ -31,7 +31,7 @@
   @param[in]    A The known system matrix
   @param[inout] x On entry: the local vector entries followed by entries to be communicated; on exit: the vector with non-local entries updated by other processors
  */
-void ExchangeHalo(const SparseMatrix & A, Vector & x, MPI_Comm comm) {
+void ExchangeHalo(const SparseMatrix & A, Vector & x) {
 
   // Extract Matrix pieces
 
@@ -43,6 +43,8 @@ void ExchangeHalo(const SparseMatrix & A, Vector & x, MPI_Comm comm) {
   double * sendBuffer = A.sendBuffer;
   local_int_t totalToBeSent = A.totalToBeSent;
   local_int_t * elementsToSend = A.elementsToSend;
+	// MPI Comm definition 
+	MPI_Comm comm = A.comm;
 
   double * const xv = x.values;
 
