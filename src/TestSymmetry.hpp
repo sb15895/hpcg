@@ -32,6 +32,6 @@ struct TestSymmetryData_STRUCT {
 };
 typedef struct TestSymmetryData_STRUCT TestSymmetryData;
 
-extern int TestSymmetry(SparseMatrix & A, Vector & b, Vector & xexact, TestSymmetryData & testsymmetry_data);
+extern int TestSymmetry(SparseMatrix & A, Vector & b, Vector & xexact, TestSymmetryData & testsymmetry_data, MPI_Comm comm);
 
 #endif  // TESTSYMMETRY_HPP

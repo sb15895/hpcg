@@ -57,7 +57,7 @@ using std::endl;
   @see ComputeMG
   @see ComputeMG_ref
 */
-int TestSymmetry(SparseMatrix & A, Vector & b, Vector & xexact, TestSymmetryData & testsymmetry_data) {
+int TestSymmetry(SparseMatrix & A, Vector & b, Vector & xexact, TestSymmetryData & testsymmetry_data, MPI_Comm comm) {
 
  local_int_t nrow = A.localNumberOfRows;
  local_int_t ncol = A.localNumberOfColumns;
@@ -126,7 +126,7 @@ int TestSymmetry(SparseMatrix & A, Vector & b, Vector & xexact, TestSymmetryData
  for (int i=0; i< numberOfCalls; ++i) {
    ierr = ComputeSPMV(A, x_ncol, z_ncol); // b_computed = A*x_overlap
    if (ierr) HPCG_fout << "Error in call to SpMV: " << ierr << ".\n" << endl;
-   if ((ierr = ComputeResidual(A.localNumberOfRows, b, z_ncol, residual)))
+   if ((ierr = ComputeResidual(A.localNumberOfRows, b, z_ncol, residual, comm)))
      HPCG_fout << "Error in call to compute_residual: " << ierr << ".\n" << endl;
    if (A.geom->rank==0) HPCG_fout << "SpMV call [" << i << "] Residual [" << residual << "]" << endl;
  }

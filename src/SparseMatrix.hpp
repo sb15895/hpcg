@@ -26,6 +26,7 @@
 #include "Geometry.hpp"
 #include "Vector.hpp"
 #include "MGData.hpp"
+#include "mpi.h"
 #if __cplusplus < 201103L
 // for C++03
 #include <map>
@@ -63,6 +64,11 @@ struct SparseMatrix_STRUCT {
   mutable MGData * mgData; // Pointer to the coarse level data for this fine matrix
   void * optimizationData;  // pointer that can be used to store implementation-specific data
 
+	/*
+	* Define MPI_Communicator 
+	*/ 
+	MPI_Comm comm;  
+
 #ifndef HPCG_NO_MPI
   local_int_t numberOfExternalValues; //!< number of entries that are external to this process
   int numberOfSendNeighbors; //!< number of neighboring processes that will be send local data
@@ -81,7 +87,7 @@ typedef struct SparseMatrix_STRUCT SparseMatrix;
 
   @param[in] A the known system matrix
  */
-inline void InitializeSparseMatrix(SparseMatrix & A, Geometry * geom) {
+inline void InitializeSparseMatrix(SparseMatrix & A, Geometry * geom, MPI_Comm comm) {
   A.title = 0;
   A.geom = geom;
   A.totalNumberOfRows = 0;
@@ -94,6 +100,8 @@ inline void InitializeSparseMatrix(SparseMatrix & A, Geometry * geom) {
   A.mtxIndL = 0;
   A.matrixValues = 0;
   A.matrixDiagonal = 0;
+	// MPI Comm definition 
+	A.comm = comm; 
 
   // Optimization is ON by default. The code that switches it OFF is in the
   // functions that are meant to be optimized.

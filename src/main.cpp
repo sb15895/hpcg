@@ -105,7 +105,10 @@ int main(int argc, char * argv[]) {
   nz = (local_int_t)params.nz;
   int ierr = 0;  // Used to check return codes on function calls
 
-  ierr = CheckAspectRatio(0.125, nx, ny, nz, "local problem", rank==0);
+	MPI_Comm comm; 
+	MPI_Comm_dup(MPI_COMM_WORLD, &comm); 
+
+  ierr = CheckAspectRatio(0.125, nx, ny, nz, "local problem", rank==0, comm);
   if (ierr)
     return ierr;
 
@@ -121,7 +124,7 @@ int main(int argc, char * argv[]) {
   Geometry * geom = new Geometry;
   GenerateGeometry(size, rank, params.numThreads, params.pz, params.zl, params.zu, nx, ny, nz, params.npx, params.npy, params.npz, geom);
 
-  ierr = CheckAspectRatio(0.125, geom->npx, geom->npy, geom->npz, "process grid", rank==0);
+  ierr = CheckAspectRatio(0.125, geom->npx, geom->npy, geom->npz, "process grid", rank==0, comm);
   if (ierr)
     return ierr;
 
@@ -131,7 +134,7 @@ int main(int argc, char * argv[]) {
   double setup_time = mytimer();
 
   SparseMatrix A;
-  InitializeSparseMatrix(A, geom);
+  InitializeSparseMatrix(A, geom, comm);
 
   Vector b, x, xexact;
   GenerateProblem(A, &b, &x, &xexact);
@@ -251,7 +254,7 @@ int main(int argc, char * argv[]) {
   TestCG(A, data, b, x, testcg_data);
 
   TestSymmetryData testsymmetry_data;
-  TestSymmetry(A, b, xexact, testsymmetry_data);
+  TestSymmetry(A, b, xexact, testsymmetry_data, comm);
 
 #ifdef HPCG_DEBUG
   if (rank==0) HPCG_fout << "Total validation (TestCG and TestSymmetry) execution time in main (sec) = " << mytimer() - t1 << endl;
