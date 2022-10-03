@@ -60,7 +60,10 @@ using std::endl;
 #include "TestCG.hpp"
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
-
+// Addition of iocomp header files 
+extern "C" {
+#include "iocomp.h"
+} 
 /*!
   Main driver program: Construct synthetic problem, run V&V tests, compute benchmark parameters, run benchmark, report results.
 
@@ -354,6 +357,15 @@ int main(int argc, char * argv[]) {
 
   // Test Norm Results
   ierr = TestNorms(testnorms_data);
+
+	// IOcomp additions start here  
+	struct iocomp_params iocompParams; 
+	int NDIM = 3;		
+  int localArraySize[NDIM] = {nx,ny,nz}; // number of elements 
+	intercommInit(&iocompParams, comm, NDIM, localArraySize); 
+	intercomm(comm,x.values,&iocompParams); 
+
+	// IOcomp additions finish here 
 
   ////////////////////
   // Report Results //
