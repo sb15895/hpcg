@@ -90,6 +90,7 @@ int main(int argc, char * argv[]) {
 	/* hard coded localArraySize for simplicity -> needs to be changed */ 
 	int NDIM = 3; 
 	int localArraySize[NDIM] = {16,16,16}; 
+	double computeTimeStart, computeTimeEnd;
 	arrayParamsInit(&iocompParams, comm, NDIM, localArraySize); 
 
 	if(iocompParams.colour == ioColour)
@@ -98,9 +99,10 @@ int main(int argc, char * argv[]) {
 		MPI_Finalize(); 
 		return(0); 
 	} 
-	comm = iocompParams.compServerComm; 
-	/* program can continue from here with no other changes from iocomp */
+	comm = iocompParams.compServerComm;
 
+	/* program can continue from here with the updated communicator which is the compServerComm */
+	computeTimeStart = MPI_Wtime(); // computetimestarts 
 	HPCG_Init(&argc, &argv, params, comm);
 
 	local_int_t nx,ny,nz;
@@ -108,11 +110,6 @@ int main(int argc, char * argv[]) {
 	ny = (local_int_t)params.ny;
 	nz = (local_int_t)params.nz;
 
-
-	/*
-	 * rest of the program can continue with the 
-	 * compServer communicator 
-	 */ 
 	// Check if QuickPath option is enabled.
 	// If the running time is set to zero, we minimize all paths through the program
 	bool quickPath = (params.runningTime==0);
@@ -385,10 +382,13 @@ int main(int argc, char * argv[]) {
 	// Test Norm Results
 	ierr = TestNorms(testnorms_data);
 
-	/*
-	 * Send data from computeServer to ioServerComm
-	 */ 
+	/* Send data from computeServer to ioServerComm */ 
+	computeTimeEnd = MPI_Wtime(); // end computeTime 
 	computeServer(x.values,&iocompParams); 
+	if(rank == 0)
+	{
+		printf("computeTime is %lfs \n", computeTimeEnd-computeTimeStart ); 
+	} 
 
 	////////////////////
 	// Report Results //
@@ -407,9 +407,8 @@ int main(int argc, char * argv[]) {
 	DeleteVector(b_computed);
 	delete [] testnorms_data.values;
 
-
-
 	HPCG_Finalize();
+	
 #ifndef HPCG_NO_MPI
 	MPI_Finalize();
 #endif
