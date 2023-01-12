@@ -79,30 +79,25 @@ int main(int argc, char * argv[]) {
 	MPI_Init(&argc, &argv);
 #endif
 
-	MPI_Comm comm; 
-	MPI_Comm_dup(MPI_COMM_WORLD, &comm); 
+	MPI_Comm globalComm, comm;  
+	MPI_Comm_dup(MPI_COMM_WORLD, &globalComm); 
 
 	HPCG_Params params;
 
 	/* initialisation of iocompParams */ 
 	struct iocomp_params iocompParams; 
-	comm_split(&iocompParams, comm); // split comm based on colours assigned 
 	/* hard coded localArraySize for simplicity -> needs to be changed */ 
 	int NDIM = 3; 
 	int localArraySize[NDIM] = {16,16,16}; 
 	double computeTimeStart, computeTimeEnd;
-	arrayParamsInit(&iocompParams, comm, NDIM, localArraySize); 
-
-	if(iocompParams.colour == ioColour)
-	{
-		intercomm(&iocompParams); 
-		MPI_Finalize(); 
-		return(0); 
-	} 
-	comm = iocompParams.compServerComm;
-
-	/* program can continue from here with the updated communicator which is the compServerComm */
+	
+	/* iocompInit sets up the intercommunicator stuff and switches on the ioServer*/
+	int HT_flag = 1; 
+	iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); 
+	comm = iocompParams.compServerComm; 
 	computeTimeStart = MPI_Wtime(); // computetimestarts 
+	/* end of top edits  */ 
+
 	HPCG_Init(&argc, &argv, params, comm);
 
 	local_int_t nx,ny,nz;
@@ -362,12 +357,16 @@ int main(int argc, char * argv[]) {
 	testnorms_data.samples = numberOfCgSets;
 	testnorms_data.values = new double[numberOfCgSets];
 
+	MPI_Request request; 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		ZeroVector(x); // Zero out x
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
+		// compute Server iocomp
+		// mpi wait to check if isend is completed 
+		dataSend(x.values, &iocompParams, &request); /* send data to iocomp library */ 
 	}
 
 	// Compute difference between known exact solution and computed solution
@@ -384,12 +383,13 @@ int main(int argc, char * argv[]) {
 
 	/* Send data from computeServer to ioServerComm */ 
 	computeTimeEnd = MPI_Wtime(); // end computeTime 
-	computeServer(x.values,&iocompParams); 
+	// cakomputeServer(x.values,&iocompParams); 
 	if(rank == 0)
 	{
 		printf("computeTime is %lfs \n", computeTimeEnd-computeTimeStart ); 
 	} 
 
+	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
 	////////////////////
 	// Report Results //
 	////////////////////
