@@ -74,10 +74,13 @@ extern "C" {
 
  */
 int main(int argc, char * argv[]) {
-
+	// iocomp - wall time starts, ends definition 
+	double walltimeStart, walltimeEnd; 
 #ifndef HPCG_NO_MPI
 	MPI_Init(&argc, &argv);
 #endif
+
+	walltimeStart = MPI_Wtime(); 
 
 	MPI_Comm globalComm, comm;  
 	MPI_Comm_dup(MPI_COMM_WORLD, &globalComm); 
@@ -88,14 +91,14 @@ int main(int argc, char * argv[]) {
 	struct iocomp_params iocompParams; 
 	/* hard coded localArraySize for simplicity -> needs to be changed */ 
 	int NDIM = 3; 
-	int localArraySize[NDIM] = {16,16,16}; 
+	int localArraySize[NDIM] = {64,64,64}; 
+	
 	double computeTimeStart, computeTimeEnd;
 	
 	/* iocompInit sets up the intercommunicator stuff and switches on the ioServer*/
 	int HT_flag = 1; 
 	iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); 
 	comm = iocompParams.compServerComm; 
-	computeTimeStart = MPI_Wtime(); // computetimestarts 
 	/* end of top edits  */ 
 
 	HPCG_Init(&argc, &argv, params, comm);
@@ -340,7 +343,8 @@ int main(int argc, char * argv[]) {
 	// The variable total_runtime is the target benchmark execution time in seconds
 
 	double total_runtime = params.runningTime;
-	int numberOfCgSets = int(total_runtime / opt_worst_time) + 1; // Run at least once, account for rounding
+	// int numberOfCgSets = int(total_runtime / opt_worst_time) + 1; // Run at least once, account for rounding
+	int numberOfCgSets = 10; // iocomp - redefined value  
 
 #ifdef HPCG_DEBUG
 	if (rank==0) {
@@ -357,17 +361,26 @@ int main(int argc, char * argv[]) {
 	testnorms_data.samples = numberOfCgSets;
 	testnorms_data.values = new double[numberOfCgSets];
 
+	/* iocomp - define time variables */ 
+	double startTime[numberOfCgSets]; 
+	double waitTime[numberOfCgSets]; 
+	double compTime[numberOfCgSets]; 
+
 	MPI_Request request; 
+
 	for (int i=0; i< numberOfCgSets; ++i) {
+		startTime[i] = MPI_Wtime(); // iocomp - start timer 	
 		ZeroVector(x); // Zero out x
+		if(i>0) {dataWait(&iocompParams,&request);} // iocomp - wait for data to be fully sent. Only if the iteration is not 0 
+		waitTime[i] = MPI_Wtime(); // iocomp - waiting timer 
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
-		// compute Server iocomp
-		// mpi wait to check if isend is completed 
-		dataSend(x.values, &iocompParams, &request); /* send data to iocomp library */ 
+		compTime[i] = MPI_Wtime(); // iocomp - finish computational timer 
+		dataSend(x.values, &iocompParams, &request); // iocomp - send data to iocomp library 
 	}
+
 
 	// Compute difference between known exact solution and computed solution
 	// All processors are needed here.
@@ -382,14 +395,26 @@ int main(int argc, char * argv[]) {
 	ierr = TestNorms(testnorms_data);
 
 	/* Send data from computeServer to ioServerComm */ 
-	computeTimeEnd = MPI_Wtime(); // end computeTime 
-	// cakomputeServer(x.values,&iocompParams); 
-	if(rank == 0)
-	{
-		printf("computeTime is %lfs \n", computeTimeEnd-computeTimeStart ); 
-	} 
+	walltimeEnd = MPI_Wtime(); // end computeTime 
 
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
+	walltimeEnd = MPI_Wtime();  //iocomp - wall time end of program 
+	/* iocomp - open and write to file by rank 0 */ 
+	if(rank == 0)
+	{
+		std::ofstream myfile;
+		myfile.open ("iocomp_timers.txt"); 
+		myfile<<"iter,waitTime,compTime,wallTime"<<endl; 
+		double wallTime = walltimeEnd - walltimeStart; 
+		for (int i=0; i< numberOfCgSets; ++i) {
+			waitTime[i] -= startTime[i]; 
+			compTime[i] -= startTime[i]; 
+			myfile<<i<<","<<waitTime[i]<<","<<compTime[i]<<","<<wallTime<<endl; //iocomp - write to text file 
+		} 
+		/* iocomp - close file  */ 
+		myfile.close(); 
+	}
+
 	////////////////////
 	// Report Results //
 	////////////////////
