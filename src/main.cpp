@@ -87,26 +87,31 @@ int main(int argc, char * argv[]) {
 
 	HPCG_Params params;
 
-	/* initialisation of iocompParams */ 
-	struct iocomp_params iocompParams; 
-	/* hard coded localArraySize for simplicity -> needs to be changed */ 
+	/* iocomp -> initialisation of iocompParams */ 
+	struct iocomp_params iocompParams; // iocomp -> struct declared 
 	int NDIM = 3; 
-	int localArraySize[NDIM] = {64,64,64}; 
-	
-	double computeTimeStart, computeTimeEnd;
-	
-	/* iocompInit sets up the intercommunicator stuff and switches on the ioServer*/
-	int HT_flag = 1; 
-	iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); 
-	comm = iocompParams.compServerComm; 
-	/* end of top edits  */ 
+	int localArraySize[NDIM] = {256,256,256}; // iocomp -> array size declared. Replaces command line array size 
+	double computeTimeStart, computeTimeEnd; // iocomp -> timer variables declared 
+	int HT_flag = 1; // iocomp -> set HT flag 
+	// iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); // iocomp -> initialise iocomp library 
+	iocompParams.hyperthreadFlag = HT_flag; // iocomp -> initialise HT flag variable  
+	arrayParamsInit(&iocompParams,globalComm,NDIM,localArraySize);   // iocomp -> initialise array parameters for all ranks 
+	comm_split(&iocompParams, globalComm); // iocomp -> split communicator 
+	comm = iocompParams.compServerComm; // iocomp -> return compute server communicator  
+	ioServerInitialise(&iocompParams); // iocomp -> ioServer starts work   
+	/* iocomp -> initialisations ended, ioServer placed on different process, comm replaced with compute comm */ 
 
 	HPCG_Init(&argc, &argv, params, comm);
 
 	local_int_t nx,ny,nz;
-	nx = (local_int_t)params.nx;
-	ny = (local_int_t)params.ny;
-	nz = (local_int_t)params.nz;
+	
+	nx  = localArraySize[0]; // iocomp -> assign pre assigned values to HPCG variables  
+	ny  = localArraySize[1]; 
+	nz  = localArraySize[2]; 
+
+//	nx = (local_int_t)params.nx;
+//	ny = (local_int_t)params.ny;
+//	nz = (local_int_t)params.nz;
 
 	// Check if QuickPath option is enabled.
 	// If the running time is set to zero, we minimize all paths through the program
