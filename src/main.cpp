@@ -61,9 +61,6 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 // Addition of iocomp header files 
-extern "C" {
-#include "iocomp.h"
-} 
 /*!
 	Main driver program: Construct synthetic problem, run V&V tests, compute benchmark parameters, run benchmark, report results.
 
@@ -90,7 +87,8 @@ int main(int argc, char * argv[]) {
 	/* iocomp -> initialisation of iocompParams */ 
 	struct iocomp_params iocompParams; // iocomp -> struct declared 
 	int NDIM = 3; 
-	int localArraySize[NDIM] = {256,256,256}; // iocomp -> array size declared. Replaces command line array size 
+	//int localArraySize[NDIM] = {256,256,256}; // iocomp -> array size declared. Replaces command line array size 
+	int localArraySize[NDIM] = {16,16,16}; // iocomp -> array size declared. Replaces command line array size 
 	double computeTimeStart, computeTimeEnd; // iocomp -> timer variables declared 
 	int HT_flag = 1; // iocomp -> set HT flag 
 	// iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); // iocomp -> initialise iocomp library 
@@ -98,10 +96,10 @@ int main(int argc, char * argv[]) {
 	arrayParamsInit(&iocompParams,globalComm,NDIM,localArraySize);   // iocomp -> initialise array parameters for all ranks 
 	comm_split(&iocompParams, globalComm); // iocomp -> split communicator 
 	comm = iocompParams.compServerComm; // iocomp -> return compute server communicator  
-	ioServerInitialise(&iocompParams); // iocomp -> ioServer starts work   
+	ioServerInitialise(&iocompParams,1); // iocomp -> ioServer starts work   
 	/* iocomp -> initialisations ended, ioServer placed on different process, comm replaced with compute comm */ 
 
-	HPCG_Init(&argc, &argv, params, comm);
+	HPCG_Init(&argc, &argv, params, &iocompParams, comm);
 
 	local_int_t nx,ny,nz;
 	

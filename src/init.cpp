@@ -65,7 +65,7 @@ startswith(const char * s, const char * prefix) {
   @see HPCG_Finalize
 */
 int
-HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, MPI_Comm comm) {
+HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_params* iocompParams,  MPI_Comm comm) {
   int argc = *argc_p;
   char ** argv = *argv_p;
   char fname[80];
