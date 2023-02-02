@@ -38,6 +38,8 @@ const char* NULLDEVICE="/dev/null";
 
 #include "ReadHpcgDat.hpp"
 
+#define NDIM 3 
+
 std::ofstream HPCG_fout; //!< output file stream for logging activities during HPCG run
 
 static int
@@ -65,7 +67,7 @@ startswith(const char * s, const char * prefix) {
   @see HPCG_Finalize
 */
 int
-HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_params* iocompParams,  MPI_Comm comm) {
+HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_params* iocompParams,  MPI_Comm globalComm) {
   int argc = *argc_p;
   char ** argv = *argv_p;
   char fname[80];
@@ -111,6 +113,20 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
       iparams[i] = 16;
   }
 
+	/*
+	 * iocomp integration 
+	 *
+	 */ 
+	int localArraySize[NDIM] = {iparams[0], iparams[1], iparams[2]}; 
+	int HT_flag = 1; // iocomp -> set HT flag 
+	int ioLibNum = 2; 
+	iocompInit(iocompParams, globalComm, NDIM, localArraySize, HT_flag, ioLibNum); // iocomp -> initialise iocomp library 
+	MPI_Comm comm = iocompParams->compServerComm; // iocomp -> return compute server communicator  
+	/* 
+	int ioLibNum = 3; // declare IO lib num  
+	ioServerInitialise(iocompParams,ioLibNum); // iocomp -> ioServer starts work   
+	*/ 
+
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
   if (broadcastParams) {
@@ -130,6 +146,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   params.npx = iparams[7];
   params.npy = iparams[8];
   params.npz = iparams[9];
+
 
 #ifndef HPCG_NO_MPI
   MPI_Comm_rank( comm, &params.comm_rank );
@@ -165,6 +182,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   }
 
   free( iparams );
+	
 
   return 0;
 }

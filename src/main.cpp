@@ -79,37 +79,21 @@ int main(int argc, char * argv[]) {
 
 	walltimeStart = MPI_Wtime(); 
 
-	MPI_Comm globalComm, comm;  
+	MPI_Comm globalComm; // replace every MPI_COMM_WORLD with comm  
 	MPI_Comm_dup(MPI_COMM_WORLD, &globalComm); 
 
 	HPCG_Params params;
 
 	/* iocomp -> initialisation of iocompParams */ 
 	struct iocomp_params iocompParams; // iocomp -> struct declared 
-	int NDIM = 3; 
-	//int localArraySize[NDIM] = {256,256,256}; // iocomp -> array size declared. Replaces command line array size 
-	int localArraySize[NDIM] = {16,16,16}; // iocomp -> array size declared. Replaces command line array size 
-	double computeTimeStart, computeTimeEnd; // iocomp -> timer variables declared 
-	int HT_flag = 1; // iocomp -> set HT flag 
-	// iocompInit(&iocompParams, globalComm, NDIM, localArraySize, HT_flag); // iocomp -> initialise iocomp library 
-	iocompParams.hyperthreadFlag = HT_flag; // iocomp -> initialise HT flag variable  
-	arrayParamsInit(&iocompParams,globalComm,NDIM,localArraySize);   // iocomp -> initialise array parameters for all ranks 
-	comm_split(&iocompParams, globalComm); // iocomp -> split communicator 
-	comm = iocompParams.compServerComm; // iocomp -> return compute server communicator  
-	ioServerInitialise(&iocompParams,1); // iocomp -> ioServer starts work   
-	/* iocomp -> initialisations ended, ioServer placed on different process, comm replaced with compute comm */ 
-
-	HPCG_Init(&argc, &argv, params, &iocompParams, comm);
+	HPCG_Init(&argc, &argv, params, &iocompParams, globalComm); // HPCG init contains iocomp init functions, and ioServerinitialiser.  
+	MPI_Comm comm = iocompParams.compServerComm; // assign computeServerComm to the communicator 
 
 	local_int_t nx,ny,nz;
 	
-	nx  = localArraySize[0]; // iocomp -> assign pre assigned values to HPCG variables  
-	ny  = localArraySize[1]; 
-	nz  = localArraySize[2]; 
-
-//	nx = (local_int_t)params.nx;
-//	ny = (local_int_t)params.ny;
-//	nz = (local_int_t)params.nz;
+	nx = (local_int_t)params.nx;
+	ny = (local_int_t)params.ny;
+	nz = (local_int_t)params.nz;
 
 	// Check if QuickPath option is enabled.
 	// If the running time is set to zero, we minimize all paths through the program
@@ -130,10 +114,6 @@ int main(int argc, char * argv[]) {
 #endif
 #endif
 
-	//local_int_t nx,ny,nz;
-	//nx = (local_int_t)params.nx;
-	//ny = (local_int_t)params.ny;
-	//nz = (local_int_t)params.nz;
 	int ierr = 0;  // Used to check return codes on function calls
 
 
