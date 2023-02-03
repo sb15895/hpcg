@@ -72,14 +72,13 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   char ** argv = *argv_p;
   char fname[80];
   int i, j, *iparams;
-  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz="};
+  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz=", "--io=", "--HT="};
   time_t rawtime;
   tm * ptm;
   const int nparams = (sizeof cparams) / (sizeof cparams[0]);
   bool broadcastParams = false; // Make true if parameters read from file.
 
   iparams = (int *)malloc(sizeof(int) * nparams);
-
   // Initialize iparams
   for (i = 0; i < nparams; ++i) iparams[i] = 0;
 
@@ -118,14 +117,11 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	 *
 	 */ 
 	int localArraySize[NDIM] = {iparams[0], iparams[1], iparams[2]}; 
-	int HT_flag = 1; // iocomp -> set HT flag 
-	int ioLibNum = 2; 
+	int HT_flag = iparams[11]; // iocomp -> set HT flag 
+	int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
+	std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
 	iocompInit(iocompParams, globalComm, NDIM, localArraySize, HT_flag, ioLibNum); // iocomp -> initialise iocomp library 
 	MPI_Comm comm = iocompParams->compServerComm; // iocomp -> return compute server communicator  
-	/* 
-	int ioLibNum = 3; // declare IO lib num  
-	ioServerInitialise(iocompParams,ioLibNum); // iocomp -> ioServer starts work   
-	*/ 
 
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
