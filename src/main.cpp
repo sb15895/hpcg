@@ -346,22 +346,33 @@ int main(int argc, char * argv[]) {
 
 	/* iocomp - define time variables */ 
 	double startTime[numberOfCgSets]; 
+	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
 
 	MPI_Request request; 
 
 	for (int i=0; i< numberOfCgSets; ++i) {
-		startTime[i] = MPI_Wtime(); // iocomp - start timer 	
+		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
+	
+		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
 		ZeroVector(x); // Zero out x
-		if(i>0) {dataWait(&iocompParams,&request);} // iocomp - wait for data to be fully sent. Only if the iteration is not 0 
-		waitTime[i] = MPI_Wtime(); // iocomp - waiting timer 
+
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
+		dataSend(x.values, &iocompParams, &request); // iocomp - send data to iocomp library 
+		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
+
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
+		dataSendTest(&iocompParams,&request); // iocomp - test data sends  
+
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
-		compTime[i] = MPI_Wtime(); // iocomp - finish computational timer 
-		dataSend(x.values, &iocompParams, &request); // iocomp - send data to iocomp library 
+		
+		waitTime[i] = MPI_Wtime(); // iocomp - start wait timer 
+		dataWait(&iocompParams,&request); // iocomp - wait for data to be fully sent 
+		waitTime[i] = MPI_Wtime() - waitTime[i]; // iocomp - end wait timer 
+
+		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
 
 
@@ -382,17 +393,16 @@ int main(int argc, char * argv[]) {
 
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
 	walltimeEnd = MPI_Wtime();  //iocomp - wall time end of program 
+
 	/* iocomp - open and write to file by rank 0 */ 
 	if(rank == 0)
 	{
 		std::ofstream myfile;
 		myfile.open ("iocomp_timers.txt"); 
-		myfile<<"iter,waitTime,compTime,wallTime"<<endl; 
+		myfile<<"iter,loopTime(s), waitTime(s),compTime(s)"<<endl; 
 		double wallTime = walltimeEnd - walltimeStart; 
 		for (int i=0; i< numberOfCgSets; ++i) {
-			waitTime[i] -= startTime[i]; 
-			compTime[i] -= startTime[i]; 
-			myfile<<i<<","<<waitTime[i]<<","<<compTime[i]<<","<<wallTime<<endl; //iocomp - write to text file 
+			myfile<<i<<","<<loopTime[i]<<","<<waitTime[i]<<","<<compTime[i]<<endl; //iocomp - write to text file 
 		} 
 		/* iocomp - close file  */ 
 		myfile.close(); 
