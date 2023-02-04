@@ -27,11 +27,11 @@ export HPCG=/work/e609/e609/shr203/hpcg/build/bin/xhpcg
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ADIOS2_DIR}/lib64:${IOCOMP_DIR}/lib
 
 # Make new directory 
-IOLAYERS=("MPIIO","HDF5","ADIOS2_HDF5","ADIOS2_BP4","ADIOS2_BP5") # assign IO layer array 
+IOLAYERS=("MPIIO" "HDF5" "ADIOS2_HDF5" "ADIOS2_BP4" "ADIOS2_BP5") # assign IO layer array 
 SIZE=16 
 for i in {0..4}
 do 
-  export RUN_DIR=${SLURM_SUBMIT_DIR}/run_dir/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${IOLAYERS[$i]}
+  export RUN_DIR=${SLURM_SUBMIT_DIR}/${SLURM_JOB_ID}/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${IOLAYERS[${i}]}
   echo ${RUN_DIR} 
   rm -rf ${RUN_DIR} 
   mkdir -p ${RUN_DIR}
