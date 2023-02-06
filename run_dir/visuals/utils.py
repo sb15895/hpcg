@@ -9,6 +9,7 @@ from datetime import datetime
 import statistics
 import re 
 import argparse
+import fnmatch
 # import seaborn as sns
 # import seaborn.objects as so
 
@@ -77,6 +78,13 @@ def HPCG_iocomp_timers(parentDir):
                     for jobIter in range(3): 
                         
                         filename = f"{parentDir}/{coreSize}/{arraySize}/{ioLayer}/{slurmMapping}/{jobIter}/iocomp_timers.txt"
+
+                        """
+                        Total data taken 
+                        """
+                        for file in os.listdir(f"{parentDir}/{coreSize}/{arraySize}/{ioLayer}/{slurmMapping}/{jobIter}"):
+                            if fnmatch.fnmatch(file,"HPCG-Benchmark*.txt"):
+                                print(file)
 
                         """
                         read info from text file 
@@ -186,7 +194,7 @@ def effectiveBW_HPCG(data):
     ioLayer_count = 0
 
     """
-    bar plot, every subplot shows different I/O layer with different mappings 
+    bar plot, x axis = core count, y axis = effective B/W, bar plots shown  
     """
     for ioLayer in ioLayerList: 
         
@@ -219,7 +227,6 @@ def effectiveBW_HPCG(data):
         ax1[i,j].set_xticklabels(coreSizeList)
         ax1[i,j].title.set_text(ioLayerList[x])
         ax1[i,j].set_yscale('log')
-        # ax1[i,j].set_ylim(10**-1,10**2)
 
         for key, value in mapping_colour.items():
             ax1[i,j].bar(x=0,height=0,label = key,color = value) # dummy plots to label compute and total time
