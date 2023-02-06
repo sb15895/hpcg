@@ -34,28 +34,52 @@ mapping_colour = {
     "Sequential": "c"
 }
 
-def HPCG_iocomp_timers(path):
-
-
-    """
-    Iterate through sub directories to get the full path 
-    """ 
-
-    # filename = f'{path}/1_2/ADIOS2_BP4/iocomp_timers.txt'
-    filename = '/Users/sbhardwa/Library/CloudStorage/OneDrive-UniversityofEdinburgh/Coding/hpcg/run_dir/4Feb/1_2/ADIOS2_BP4/iocomp_timers.txt'
+def HPCG_iocomp_timers(parentDir):
 
     """
-    read info from text file 
-    and convert into PD dictionary 
-    """ 
-
-    mydata = pd.read_csv(filename,index_col=False,skiprows=0) 
+    Iterate through parent dir to get list of cores 
+    """
+    dir_list = next(os.walk(parentDir))[1]
+    data = {} # main dictionary initialised   
 
     """
-    average times 
+    Iterate over core sizes
     """
+    data_io = {} # dictionary for I/O stuff 
+    for core_size in dir_list:
+        core = core_size.split("_",1)[1] # hardcoded value of only 1 node used 
+        layer_list = next(os.walk(f"{parentDir}/{core_size}"))[1]
+        
+        """
+        Iterate over I/O layers 
+        """
+        for ioLayer in layer_list: 
 
-    average_function(mydata) 
+            filename = f"{parentDir}/{core_size}/{ioLayer}/iocomp_timers.txt"
+
+            """
+            read info from text file 
+            and convert into PD dictionary 
+            """ 
+            mydata = pd.read_csv(filename,index_col=False,skiprows=0) 
+
+            """
+            average times 
+            """
+            avg = {} 
+            avg = average_function(mydata) 
+
+            """
+            add data per I/O layer
+            """
+            data_io[filename] = avg 
+        
+        """
+        add data per core size 
+        """
+        data[core] = data_io
+
+    print(data)
 
     
 
@@ -64,6 +88,12 @@ def average_function(mydata):
     loopTime_avg = mydata['loopTime(s)'].mean() 
     waitTime_avg = mydata[' waitTime(s)'].mean() 
     compTime_avg = mydata['compTime(s)'].mean() 
+    avg = {}
+    avg[loopTime_avg] = loopTime_avg
+    avg[waitTime_avg] = waitTime_avg
+    avg[compTime_avg] = compTime_avg
+    return(avg) 
+
 
 
 
