@@ -10,5 +10,9 @@ parser.add_argument('--name')  # if save used then fig is saved, otherwise plt.s
 args = parser.parse_args()
 
 path = f"{os.getcwd()}/6Feb" 
-HPCG_iocomp_timers(path)
+
+data = HPCG_iocomp_timers(path) # output multi level dict with all information 
+
+effectiveBW_HPCG(data) # plot of effective BW for HPCG 
+
 
