@@ -398,8 +398,8 @@ int main(int argc, char * argv[]) {
 	if(rank == 0)
 	{
 		std::ofstream myfile;
-		myfile.open ("iocomp_timers.txt"); 
-		myfile<<"iter,loopTime(s), waitTime(s),compTime(s)"<<endl; 
+		myfile.open ("iocomp_timers.csv"); 
+		myfile<<"iter,loopTime(s),waitTime(s),compTime(s)"<<endl; 
 		double wallTime = walltimeEnd - walltimeStart; 
 		for (int i=0; i< numberOfCgSets; ++i) {
 			myfile<<i<<","<<loopTime[i]<<","<<waitTime[i]<<","<<compTime[i]<<endl; //iocomp - write to text file 
