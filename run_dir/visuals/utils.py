@@ -75,17 +75,19 @@ def HPCG_iocomp_timers(parentDir):
                     Iterate over job arrays 
                     """
                     avg = {} 
-                    for jobIter in range(3): 
+                    for jobIter in range(1,2): 
+
+                        path = f"{parentDir}/{coreSize}/{arraySize}/{ioLayer}/{slurmMapping}/{jobIter}"
                         
-                        filename = f"{parentDir}/{coreSize}/{arraySize}/{ioLayer}/{slurmMapping}/{jobIter}/iocomp_timers.txt"
+                        filename = f"{path}/iocomp_timers.csv"
 
                         """
-                        Total data taken 
+                        Total data taken from HPCG
+                        Obtained by reading HPCG benchmark file in the same directory as the iocomp timers 
+                        Regex reads the line and gives total data used  
                         """
-                        for file in os.listdir(f"{parentDir}/{coreSize}/{arraySize}/{ioLayer}/{slurmMapping}/{jobIter}"):
-                            if fnmatch.fnmatch(file,"HPCG-Benchmark*.txt"):
-                                print(file)
-
+                        HPCG_totalData=HPCG_data_used(path)
+                                    
                         """
                         read info from text file 
                         and convert into PD dictionary 
@@ -102,6 +104,7 @@ def HPCG_iocomp_timers(parentDir):
                     add data per slurm mapping
                     """
                     data_mapping[slurmMapping] = average_jobs(avg)
+                    data_mapping[slurmMapping]["HPCG_totalData"] = HPCG_totalData # added HPCG total data to data_mapping
 
                 """
                 add data per I/O layer
@@ -120,20 +123,51 @@ def HPCG_iocomp_timers(parentDir):
     
     return(data)
 
+
+"""
+Total data taken from HPCG
+Obtained by reading HPCG benchmark file in the same directory as the iocomp timers 
+Regex reads the line and gives total data used  
+"""
+
+def HPCG_data_used(path): 
+
+    for file in os.listdir(path):
+        if fnmatch.fnmatch(file,"HPCG-Benchmark*.txt"):
+            with open(f"{path}/{file}") as f: # read individual test.out for printed values of io write times
+                contents = f.read()
+                # data_retrieve = re.findall(r"\*\* I\/O write time=(\d+.\d+) filesize\(GB\)=(\d+.\d+)",contents) 
+                data_retrieve = re.findall(r"Memory Use Information::Total memory used for data \(Gbytes\)=(?:\d*\.*\d+)",contents) 
+                for x in data_retrieve: # add all individual file write times in output file to writeTime and fileSize
+                    HPCG_string = x.split("=")
+                    HPCG_data = HPCG_string[1]
+    
+    return(HPCG_data)
+
     
 """
 average_function averages loop, wait and comp time per file 
+also returns std deviations of the values 
 """
 def average_function(mydata): 
 
-    loopTime_avg = mydata['loopTime(s)'].mean() 
-    waitTime_avg = mydata[' waitTime(s)'].mean() 
-    compTime_avg = mydata['compTime(s)'].mean() 
     avg = {}
+    loopTime_avg = mydata['loopTime(s)'].mean() 
+    waitTime_avg = mydata['waitTime(s)'].mean() 
+    compTime_avg = mydata['compTime(s)'].mean() 
     avg["loopTime_avg"] = loopTime_avg
     avg["waitTime_avg"] = waitTime_avg
     avg["compTime_avg"] = compTime_avg
+
+
+    loopTime_std = mydata['loopTime(s)'].std() 
+    waitTime_std = mydata['waitTime(s)'].std() 
+    compTime_std = mydata['compTime(s)'].std() 
+    avg["loopTime_std"] = loopTime_std
+    avg["waitTime_std"] = waitTime_std
+    avg["compTime_std"] = compTime_std
     return(avg) 
+
 
 """
 average_jobs averages the average loop, wait and comp time over the array of jobs
@@ -157,40 +191,42 @@ def average_jobs(avg):
     avg_job["waitTime"] = waitTime_avg/3
     avg_job["compTime"] = compTime_avg/3
 
+    # std deviations for average jobs. Not sure how to average over std deviations??     
+    avg_job["loopTime_std"] = avg[key]["loopTime_std"]
+    avg_job["waitTime_std"] = avg[key]["waitTime_std"]
+    avg_job["compTime_std"] = avg[key]["compTime_std"]
+
     return(avg_job)
-
-"""
-plot function 
-"""
-def plot_HPCG(data):
-
-    coreSize = "2"
-    arraySize = "16"
-    slurmMapping = "Hyperthread"
-    ioLayer = "MPIIO"
-
-    x = data[coreSize][arraySize][ioLayer][slurmMapping]
-    print(x)
 
 
 """
 effective HPCG bandwidth obtained by total data/ total time taken 
 """
 def effectiveBW_HPCG(data):
-    totalDataSize = 0.00292909
+    totalDataSize = 5.99
     fig1, ax1 = plt.subplots(2, 2,figsize=(10,8),sharey=True)
+
+    coreSizeList = [
+        "2",
+        "4",
+        "8",
+        "16",
+        "32",
+        "64",
+        "128"
+    ]
     
-    coreSizeList = ["2"] 
-    arraySize = "16"
+    arraySize = "32"
      
     ioLayerList = [
         "MPIIO",
         "HDF5", 
         "ADIOS2_BP4",
-        "ADIOS2_BP5"
+        # "ADIOS2_BP5",
+        "ADIOS2_HDF5"
     ] 
     
-    width_=0.4
+    width_=0.20
     ioLayer_count = 0
 
     """
@@ -207,10 +243,12 @@ def effectiveBW_HPCG(data):
             for coreSize in coreSizeList:
                 
                 loopTime = data[coreSize][arraySize][ioLayer][slurmMapping]["loopTime"]
+                loopTime_std = data[coreSize][arraySize][ioLayer][slurmMapping]["loopTime_std"]
+                totalData = data[coreSize][arraySize][ioLayer][slurmMapping]["HPCG_totalData"]
                 i=int(ioLayer_count/2)
                 j=int(ioLayer_count%2)
-                bw = (totalDataSize/loopTime) 
-                ax1[i,j].bar(slurm_count*width_ + core_count , bw,width=width_, color=mapping_colour[slurmMapping],capsize=10)
+                bw = (float(totalData)/float(loopTime)) 
+                ax1[i,j].bar(slurm_count*width_ + core_count , bw,width=width_,color=mapping_colour[slurmMapping],capsize=10)
                 core_count = core_count + 1 
             
             slurm_count = slurm_count+1
@@ -220,11 +258,15 @@ def effectiveBW_HPCG(data):
     """
     ticks for each subplot
     """
+    computeProcesses = []  # computeProcesses are half the core sizes 
+    for cores in coreSizeList:
+        computeProcesses.append(int(int(cores)/2))
+
     for x in range(4):
         i = int(x/2)
         j = int(x%2)
         ax1[i,j].set_xticks(np.arange(len(coreSizeList))+width_*len(slurmMappingList)/2-width_/2) 
-        ax1[i,j].set_xticklabels(coreSizeList)
+        ax1[i,j].set_xticklabels(computeProcesses) 
         ax1[i,j].title.set_text(ioLayerList[x])
         ax1[i,j].set_yscale('log')
 
@@ -232,12 +274,11 @@ def effectiveBW_HPCG(data):
             ax1[i,j].bar(x=0,height=0,label = key,color = value) # dummy plots to label compute and total time
 
     fig1.supxlabel('Number of compute processes')
-    fig1.supylabel('Effective average memory bandwidth (GB/s)')
+    fig1.supylabel('Effective average HPCG bandwidth (GB/s)')
     ax1[0,0].legend() # legend only in 1st quad
     fig1.tight_layout() 
-    # plt.rcParams['grid.alpha'] = 0.5 # grid lines bit less visible
-    # plt.rcParams['grid.linewidth'] = 0.1 # grid lines bit less visible
-    plt.show() 
+    # plt.show()
+    plt.savefig("plots/avgHPCG_BW.png") 
     # if (name == None):
     #     name = "STREAM_BW"
     # saveName = f"{name}_{datetime.now().strftime('%d,%m,%Y,%H,%M')}"

@@ -9,7 +9,7 @@ parser.add_argument('--save', action='store_true')  # if save used then fig is s
 parser.add_argument('--name')  # if save used then fig is saved, otherwise plt.show
 args = parser.parse_args()
 
-path = f"{os.getcwd()}/6Feb" 
+path = f"{os.getcwd()}/7Feb" 
 
 data = HPCG_iocomp_timers(path) # output multi level dict with all information 
 
