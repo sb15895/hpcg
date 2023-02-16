@@ -348,8 +348,10 @@ int main(int argc, char * argv[]) {
 	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
+	size_t localDataSize = nx*ny*nz; 
 
-	MPI_Request request; 
+	MPI_Request request;
+
 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
@@ -358,7 +360,7 @@ int main(int argc, char * argv[]) {
 		ZeroVector(x); // Zero out x
 
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
-		dataSend(x.values, &iocompParams, &request); // iocomp - send data to iocomp library 
+		dataSend(x.values, &iocompParams, &request, localDataSize); // iocomp - send data to iocomp library 
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
 
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;

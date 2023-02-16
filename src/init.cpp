@@ -114,14 +114,11 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 
 	/*
 	 * iocomp integration 
-	 *
 	 */ 
-	int localArraySize[NDIM] = {iparams[0], iparams[1], iparams[2]}; 
 	int HT_flag = iparams[11]; // iocomp -> set HT flag 
 	int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
 	std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
-	iocompInit(iocompParams, globalComm, NDIM, localArraySize, HT_flag, ioLibNum); // iocomp -> initialise iocomp library 
-	MPI_Comm comm = iocompParams->compServerComm; // iocomp -> return compute server communicator  
+	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
