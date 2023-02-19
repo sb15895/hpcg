@@ -53,7 +53,8 @@ do
     vals=($(seq 0 1 $(eval echo ${end})))
     bar=$(IFS=, ; echo "${vals[*]}")
     # srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${HALF_CORES} --nodes=1  --cpu-bind=map_cpu:${bar[@]}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=0 > test.out
-    srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${HALF_CORES} --nodes=${HALF_NODES}  xthi > test.out
+    srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${HALF_CORES} --nodes=${HALF_NODES}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=0 > test.out
+ 
     wait 
 
   # Case 2
@@ -69,7 +70,8 @@ do
     vals=($(seq 0 1 $(eval echo ${end})))
     bar=$(IFS=, ; echo "${vals[*]}")
     # srun  --cpu-bind=verbose --hint=nomultithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --overcommit --cpu-bind=map_cpu:${bar[@]}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
-    srun  --cpu-bind=verbose --hint=nomultithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=${HALF_NODES}  --cpu-bind=map_cpu:${bar[@]} --overcommit xthi > test.out
+    srun  --cpu-bind=verbose --hint=nomultithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=${HALF_NODES}  --cpu-bind=map_cpu:${bar[@]} --overcommit ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out 
+    
     wait 
 
   # Case 3
@@ -91,7 +93,8 @@ do
     updated=("${vals[@]}" "${vals_HT[@]}")
     bar=$(IFS=, ; echo "${updated[*]}")
     # srun  --cpu-bind=verbose --hint=multithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
-    srun  --cpu-bind=verbose --hint=multithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=${HALF_NODES} --cpu-bind=map_cpu:${bar[@]} xthi > test.out
+    srun  --cpu-bind=verbose --hint=multithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=${HALF_NODES} --cpu-bind=map_cpu:${bar[@]}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out    
+    
     wait
 
   # Case 4
@@ -108,7 +111,7 @@ do
     vals=($(seq 0 1 $(eval echo ${end})))
     bar=$(IFS=, ; echo "${vals[*]}")
     # srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
-    srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${FULL_CORES} --nodes=${SLURM_NNODES} xthi > test.out
+    srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${FULL_CORES} --nodes=${SLURM_NNODES} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
   done 
 
 module list  2>&1 | tee -a test.out 
