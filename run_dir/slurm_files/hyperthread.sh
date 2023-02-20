@@ -3,7 +3,7 @@
    echo "**" $CASE 
    rm -rf ${RUNDIR}
    mkdir -p ${RUNDIR}
-#   lfs setstripe -c -1  ${RUNDIR}
+   lfs setstripe -c -1  ${RUNDIR}
    cd ${RUNDIR} 
    # seq 1
    end=$((${HALF_CORES}-1))
@@ -14,4 +14,5 @@
    vals_HT=($(seq $(eval echo ${start}) 1 $(eval echo ${end})))
    updated=("${vals[@]}" "${vals_HT[@]}")
    bar=$(IFS=, ; echo "${updated[*]}")
+   srun  --cpu-bind=verbose --hint=multithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --cpu-bind=map_cpu:${bar[@]} xthi > test.out
 #    srun  --cpu-bind=verbose --hint=multithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
