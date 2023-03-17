@@ -1,14 +1,30 @@
-   export CASE=Oversubscribe
-   export RUNDIR=${PARENT_DIR}/${CASE}/$i
-   echo "**" $CASE 
-	 echo $RUNDIR
-   rm -rf ${RUNDIR}
-   mkdir -p ${RUNDIR}
-   lfs setstripe -c -1  ${RUNDIR}
-   cd ${RUNDIR} 
-   end=$((${HALF_CORES}-1))
-   vals=($(seq 0 1 $(eval echo ${end})))
-   bar=$(IFS=, ; echo "${vals[*]}")
-	 echo $bar
-   srun  --cpu-bind=verbose --hint=nomultithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --overcommit --cpu-bind=map_cpu:${bar[@]} xthi > test.out
-#   srun  --cpu-bind=verbose --hint=nomultithread --distribution=block:block --ntasks=${FULL_CORES} --nodes=1 --overcommit --cpu-bind=map_cpu:${bar[@]}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=1 > test.out
+export CASE=Oversubscribe
+export RUNDIR=${PARENT_DIR}/${CASE}/$i
+echo "**" $CASE 
+echo $RUNDIR
+rm -rf ${RUNDIR}
+mkdir -p ${RUNDIR}
+lfs setstripe -c -1  ${RUNDIR}
+cd ${RUNDIR} 
+cp ${CONFIG} . 
+
+# give sequence of cpu mappings 
+if (( ${SLURM_NNODES} > 1  )); then 
+  NUM_NODES=${HALF_NODES} 
+  END_CORES=${FULL_CORES} 
+else
+  NUM_NODES=${SLURM_NNODES} 
+  END_CORES=${HALF_CORES}
+fi 
+
+end=$((${END_CORES}-1))
+vals=($(seq 0 1 $(eval echo ${end})))
+bar=$(IFS=, ; echo "${vals[*]}")
+
+#srun --hint=nomultithread --distribution=block:block --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} --overcommit ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
+srun --hint=nomultithread --distribution=block:block --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} --overcommit xthi  
+
+module list  2>&1 | tee -a test.out 
+
+echo "JOB ID"  $SLURM_JOBID >> test.out
+echo "JOB NAME" ${SLURM_JOB_NAME} >> test.out
