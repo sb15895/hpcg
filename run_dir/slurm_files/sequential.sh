@@ -1,6 +1,7 @@
 export CASE=Sequential
 export RUNDIR=${PARENT_DIR}/${CASE}/$i
 echo "**" $CASE 
+echo $RUNDIR 
 rm -rf ${RUNDIR}
 mkdir -p ${RUNDIR}
 lfs setstripe -c -1  ${RUNDIR}
@@ -18,8 +19,7 @@ if (( ${SLURM_NNODES} > 1  )); then
 
   HALF_TASKS=$((${SLURM_NNODES}*${SLURM_NTASKS_PER_NODE}/2)) # half the number of total tasks divided between the allocated nodes 
 
-  #srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NNODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
-  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NNODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} xthi 
+  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
 
 else
   NUM_NODES=${SLURM_NNODES} 
@@ -30,7 +30,9 @@ else
   vals=($(seq 0 1 $(eval echo ${end})))
   bar=$(IFS=, ; echo "${vals[*]}")
  
-  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} xthi 
+  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
+
+
 fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out

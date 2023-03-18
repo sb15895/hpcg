@@ -1,6 +1,7 @@
 export CASE=Hyperthread
 export RUNDIR=${PARENT_DIR}/${CASE}/$i
 echo "**" $CASE 
+echo $RUNDIR
 rm -rf ${RUNDIR}
 mkdir -p ${RUNDIR}
 lfs setstripe -c -1  ${RUNDIR}
@@ -34,9 +35,7 @@ vals_HT=($(seq $(eval echo ${start}) 1 $(eval echo ${end})))
 updated=("${vals[@]}" "${vals_HT[@]}")
 bar=$(IFS=, ; echo "${updated[*]}")
 
-#srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
-srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} xthi 
+srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
 
-module list  2>&1 | tee -a test.out 
 echo "JOB ID"  $SLURM_JOBID >> test.out
 echo "JOB NAME" ${SLURM_JOB_NAME} >> test.out
