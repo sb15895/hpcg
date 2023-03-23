@@ -29,10 +29,14 @@ else
   end=$((${END_CORES}-1))
   vals=($(seq 0 1 $(eval echo ${end})))
   bar=$(IFS=, ; echo "${vals[*]}")
+
+  TOTAL_RANKS=$((${NUM_NODES} * ${END_CORES} ))
  
-  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
-
-
+  if (($MAP == 1)); then 
+    map -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0
+  else 
+    srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
+  fi 
 fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out

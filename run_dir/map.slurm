@@ -1,13 +1,12 @@
 #!/bin/bash --login
-#SBATCH --job-name=hpcg
+#SBATCH --job-name=hpcg_map
 #SBATCH --nodes=1
-#SBATCH --tasks-per-node=128
+#SBATCH --tasks-per-node=16
 #SBATCH --cpus-per-task=1
-#SBATCH --time=10:00:00
+#SBATCH --time=00:10:00
 #SBATCH --account=e609
 #SBATCH --partition=standard 
-#SBATCH --qos=lowpriority
-#SBATCH --array=0-2
+#SBATCH --qos=standard 
 
 module swap PrgEnv-cray/8.0.0 PrgEnv-gnu
 module load cmake 
@@ -16,6 +15,7 @@ module load xthi
 module swap craype-network-ofi craype-network-ucx 
 module swap cray-mpich cray-mpich-ucx 
 module load cray-hdf5-parallel
+module load arm/forge 
 
 # Setup environment
 export PPN=${SLURM_NTASKS_PER_NODE}
@@ -34,28 +34,28 @@ HALF_CORES=$((${SLURM_NTASKS_PER_NODE}/2))
 FULL_CORES=$((${SLURM_NTASKS_PER_NODE})) 
 HALF_NODES=$((${SLURM_NNODES}/2))
 
-MAP=0
+MAP=1 
 echo "Job started " $(date +"%T") # start time
 
-for m in {0..4}
+for m in {0..0}
 do 
-  export PARENT_DIR=${SLURM_SUBMIT_DIR}/20March/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${SIZE}/${IOLAYERS[${m}]}
+  export PARENT_DIR=${SLURM_SUBMIT_DIR}/ARM_MAP/v1.1/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${SIZE}/${IOLAYERS[${m}]}
 
   # Case 1 
 	source ${SLURM_SUBMIT_DIR}/slurm_files/sequential.sh
-	wait 
-
-  # Case 2
-	source ${SLURM_SUBMIT_DIR}/slurm_files/oversubscribe.sh 
-	wait 
-
-  # Case 3
-	source ${SLURM_SUBMIT_DIR}/slurm_files/hyperthread.sh 
-	wait 
-
-  # Case 4
-	source ${SLURM_SUBMIT_DIR}/slurm_files/consecutive.sh
-	wait 
+#	wait 
+#
+#  # Case 2
+#	source ${SLURM_SUBMIT_DIR}/slurm_files/oversubscribe.sh 
+#	wait 
+#
+#  # Case 3
+#	source ${SLURM_SUBMIT_DIR}/slurm_files/hyperthread.sh 
+#	wait 
+#
+#  # Case 4
+#	source ${SLURM_SUBMIT_DIR}/slurm_files/consecutive.sh
+#	wait 
 done 
 
 echo $(module list) 

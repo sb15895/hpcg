@@ -35,7 +35,13 @@ vals_HT=($(seq $(eval echo ${start}) 1 $(eval echo ${end})))
 updated=("${vals[@]}" "${vals_HT[@]}")
 bar=$(IFS=, ; echo "${updated[*]}")
 
-srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
+if (($MAP == 1)); then 
+  TOTAL_RANKS=$((${NUM_NODES} * ${FULL_CORES}))
+  map -n $TOTAL_RANKS --mpiargs="--hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 
+
+else
+  srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
+fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out
 echo "JOB NAME" ${SLURM_JOB_NAME} >> test.out
