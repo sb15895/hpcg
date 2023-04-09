@@ -1,14 +1,43 @@
 export CASE=Sequential
 export RUNDIR=${PARENT_DIR}/${CASE}/$i
-echo $RUNDIR
 echo "**" $CASE 
+echo $RUNDIR 
 rm -rf ${RUNDIR}
 mkdir -p ${RUNDIR}
 lfs setstripe -c -1  ${RUNDIR}
 cd ${RUNDIR} 
-end=$((${HALF_CORES}-1))
-vals=($(seq 0 1 $(eval echo ${end})))
-bar=$(IFS=, ; echo "${vals[*]}")
-echo $bar
-srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${HALF_CORES} --nodes=1  --cpu-bind=map_cpu:${bar[@]}  xthi > test.out 
-#srun --cpu-bind=verbose --hint=nomultithread  --distribution=block:block --ntasks=${HALF_CORES} --nodes=1  --cpu-bind=map_cpu:${bar[@]}  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${i} --HT=0 > test.out
+cp ${CONFIG} . 
+
+if (( ${SLURM_NNODES} > 1  )); then 
+  NUM_NODES=${HALF_NODES} 
+  END_CORES=${FULL_CORES}
+
+  # sequencing for cpu bind 
+  end=$((${END_CORES}-1))
+  vals=($(seq 0 1 $(eval echo ${end})))
+  bar=$(IFS=, ; echo "${vals[*]}")
+
+  HALF_TASKS=$((${SLURM_NNODES}*${SLURM_NTASKS_PER_NODE}/2)) # half the number of total tasks divided between the allocated nodes 
+
+  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
+
+else
+  NUM_NODES=${SLURM_NNODES} 
+  END_CORES=${HALF_CORES}
+  
+  # sequencing for cpu bind 
+  end=$((${END_CORES}-1))
+  vals=($(seq 0 1 $(eval echo ${end})))
+  bar=$(IFS=, ; echo "${vals[*]}")
+
+  TOTAL_RANKS=$((${NUM_NODES} * ${END_CORES} ))
+ 
+  if (($MAP == 1)); then 
+    map -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0
+  else 
+    srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=0 > test.out
+  fi 
+fi 
+
+echo "JOB ID"  $SLURM_JOBID >> test.out
+echo "JOB NAME" ${SLURM_JOB_NAME} >> test.out
