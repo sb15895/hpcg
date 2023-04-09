@@ -37,8 +37,7 @@ const char* NULLDEVICE="/dev/null";
 #include "hpcg.hpp"
 
 #include "ReadHpcgDat.hpp"
-
-#define NDIM 3 
+#define NODESIZE 16 
 
 std::ofstream HPCG_fout; //!< output file stream for logging activities during HPCG run
 
@@ -118,7 +117,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	int HT_flag = iparams[11]; // iocomp -> set HT flag 
 	int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
 	std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
-	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum); // iocomp -> initialise iocomp library 
+	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
