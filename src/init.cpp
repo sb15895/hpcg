@@ -116,7 +116,6 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	 */ 
 	int HT_flag = iparams[11]; // iocomp -> set HT flag 
 	int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
-	std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
 	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
@@ -143,6 +142,10 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 #ifndef HPCG_NO_MPI
   MPI_Comm_rank( comm, &params.comm_rank );
   MPI_Comm_size( comm, &params.comm_size );
+	if(!params.comm_rank) 
+	{
+		std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
+	} 
 #else
   params.comm_rank = 0;
   params.comm_size = 1;
