@@ -402,6 +402,21 @@ int main(int argc, char * argv[]) {
 	walltimeEnd = MPI_Wtime(); // end computeTime 
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
 	wallTime = MPI_Wtime() - walltimeStart; // calculate wall time after finalising io servers 
+	
+	/*
+	 * MPI Reduction for timers 
+	 */ 
+	// inits
+	double loopTime_Reduced[numberOfCgSets]; 
+	double waitTime_Reduced[numberOfCgSets]; 
+	double compTime_Reduced[numberOfCgSets]; 
+	double sendTime_Reduced[numberOfCgSets]; 
+	double wallTime_Reduced; 
+	// MPI reduce operations 	
+	MPI_Reduce(loopTime,loopTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
+	MPI_Reduce(waitTime,waitTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
+	MPI_Reduce(compTime,compTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
+	MPI_Reduce(&wallTime,&wallTime_Reduced, 1, MPI_DOUBLE, MPI_MAX, 0, comm);  
 
 	/* iocomp - open and write to file by rank 0 */ 
 	if(rank == 0)
@@ -410,7 +425,7 @@ int main(int argc, char * argv[]) {
 		myfile.open ("iocomp_timers.csv"); 
 		myfile<<"iter,loopTime(s),compTime(s),sendTime(s),waitTime(s),wallTime(s)"<<endl; 
 		for (int i=0; i< numberOfCgSets; ++i) {
-			myfile<<i<<","<<loopTime[i]<<","<<compTime[i]<<","<<sendTime[i]<<","<<waitTime[i]<<","<<wallTime<<endl; //iocomp - write to text file 
+			myfile<<i<<","<<loopTime_Reduced[i]<<","<<compTime_Reduced[i]<<","<<sendTime_Reduced[i]<<","<<waitTime_Reduced[i]<<","<<wallTime_Reduced<<endl; //iocomp - write to text file 
 		} 
 		/* iocomp - close file  */ 
 		myfile.close(); 
