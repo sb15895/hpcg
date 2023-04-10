@@ -1,4 +1,5 @@
 out
+**/*.txt
 *.swp
 src/*.o
 bin/HPCG-Benchmark_3*.txt

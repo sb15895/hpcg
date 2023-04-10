@@ -60,6 +60,8 @@ using std::endl;
 #include "TestCG.hpp"
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
+
+#define MAXITER 10 // arbitrary value to set number of compute loops
 // Addition of iocomp header files 
 /*!
 	Main driver program: Construct synthetic problem, run V&V tests, compute benchmark parameters, run benchmark, report results.
@@ -100,6 +102,7 @@ int main(int argc, char * argv[]) {
 	bool quickPath = (params.runningTime==0);
 
 	int size = params.comm_size, rank = params.comm_rank; // Number of MPI processes, My process ID
+
 
 #ifdef HPCG_DETAILED_DEBUG
 	if (size < 100 && rank==0) HPCG_fout << "Process "<<rank<<" of "<<size<<" is alive with " << params.numThreads << " threads." <<endl;
@@ -326,7 +329,9 @@ int main(int argc, char * argv[]) {
 	// The variable total_runtime is the target benchmark execution time in seconds
 
 	double total_runtime = params.runningTime;
-	int numberOfCgSets = int(total_runtime / opt_worst_time) + 1; // Run at least once, account for rounding
+	//int numberOfCgSets = int(total_runtime / opt_worst_time) + 1; // Run at least once, account for rounding
+	int numberOfCgSets = MAXITER; // set value as 10 
+
 
 #ifdef HPCG_DEBUG
 	if (rank==0) {
@@ -348,6 +353,8 @@ int main(int argc, char * argv[]) {
 	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
+	double sendTime[numberOfCgSets]; 
+	double wallTime; 
 	size_t localDataSize = nx*ny*nz; 
 
 	MPI_Request request;
@@ -358,10 +365,12 @@ int main(int argc, char * argv[]) {
 	
 		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
 		ZeroVector(x); // Zero out x
-
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
-		dataSend(x.values, &iocompParams, &request, localDataSize); // iocomp - send data to iocomp library 
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
+	
+		sendTime[i] = MPI_Wtime(); // iocomp - start send timer 
+		dataSend(x.values, &iocompParams, &request, localDataSize); // iocomp - send data to iocomp library 
+		sendTime[i] = MPI_Wtime() - sendTime[i]; // iocomp - end send timer 
 
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 		dataSendTest(&iocompParams,&request); // iocomp - test data sends  
@@ -391,19 +400,17 @@ int main(int argc, char * argv[]) {
 
 	/* Send data from computeServer to ioServerComm */ 
 	walltimeEnd = MPI_Wtime(); // end computeTime 
-
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
-	walltimeEnd = MPI_Wtime();  //iocomp - wall time end of program 
+	wallTime = MPI_Wtime() - walltimeStart; // calculate wall time after finalising io servers 
 
 	/* iocomp - open and write to file by rank 0 */ 
 	if(rank == 0)
 	{
 		std::ofstream myfile;
 		myfile.open ("iocomp_timers.csv"); 
-		myfile<<"iter,loopTime(s),waitTime(s),compTime(s)"<<endl; 
-		double wallTime = walltimeEnd - walltimeStart; 
+		myfile<<"iter,loopTime(s),compTime(s),sendTime(s),waitTime(s),wallTime(s)"<<endl; 
 		for (int i=0; i< numberOfCgSets; ++i) {
-			myfile<<i<<","<<loopTime[i]<<","<<waitTime[i]<<","<<compTime[i]<<endl; //iocomp - write to text file 
+			myfile<<i<<","<<loopTime[i]<<","<<compTime[i]<<","<<sendTime[i]<<","<<waitTime[i]<<","<<wallTime<<endl; //iocomp - write to text file 
 		} 
 		/* iocomp - close file  */ 
 		myfile.close(); 
