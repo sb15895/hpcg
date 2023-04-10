@@ -414,8 +414,9 @@ int main(int argc, char * argv[]) {
 	double wallTime_Reduced; 
 	// MPI reduce operations 	
 	MPI_Reduce(loopTime,loopTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
-	MPI_Reduce(waitTime,waitTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
 	MPI_Reduce(compTime,compTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
+	MPI_Reduce(sendTime,sendTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
+	MPI_Reduce(waitTime,waitTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
 	MPI_Reduce(&wallTime,&wallTime_Reduced, 1, MPI_DOUBLE, MPI_MAX, 0, comm);  
 
 	/* iocomp - open and write to file by rank 0 */ 
