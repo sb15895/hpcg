@@ -83,8 +83,8 @@ BINdir       = $(TOPdir)/bin
 # used. The variable MPdir is only used for defining MPinc and MPlib.
 #
 MPdir        =$(OMPI_DIR)
-MPinc        =-I$(MPdir)/include -I$(IOCOMP_DIR)/include -I$(ADIOS2_DIR)/include -I$(HDF5_DIR)/include 
-MPlib        =$(MPdir)/lib -L$(IOCOMP_DIR)/lib -liocomp -L$(HDF5_DIR)/lib -lhdf5_hl -lhdf5  -L$(ADIOS2_DIR)/lib -ladios2_c -ladios2_c_mpi -L$(ADIOS2_DIR)/lib64 -ladios2_c -ladios2_c_mpi  -lm 
+MPinc        =-I$(MPdir)/include  
+MPlib        =$(MPdir)/lib  
 
 
 #
@@ -92,8 +92,8 @@ MPlib        =$(MPdir)/lib -L$(IOCOMP_DIR)/lib -liocomp -L$(HDF5_DIR)/lib -lhdf5
 # - HPCG includes / libraries / specifics -------------------------------
 # ----------------------------------------------------------------------
 #
-HPCG_INCLUDES = -I$(INCdir) -I$(INCdir)/$(arch) $(MPinc) # -I$(IOCOMP_DIR)/include 
-HPCG_LIBS     = -L$(IOCOMP_DIR)/lib -liocomp 
+HPCG_INCLUDES = -I$(INCdir) -I$(INCdir)/$(arch) $(MPinc) -I$(IOCOMP_DIR)/include -I$(ADIOS2_DIR)/include -I$(HDF5_DIR)/include
+HPCG_LIBS     = -L$(IOCOMP_DIR)/lib -liocomp -L$(HDF5_DIR)/lib -lhdf5_hl -lhdf5  -L$(ADIOS2_DIR)/lib -ladios2_c -ladios2_c_mpi -L$(ADIOS2_DIR)/lib64 -ladios2_c -ladios2_c_mpi  -lm
 #
 # - Compile time options -----------------------------------------------
 #
