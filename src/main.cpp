@@ -61,7 +61,8 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 
-#define MAXITER 10 // arbitrary value to set number of compute loops
+#define MAXITER 1 // arbitrary value to set number of compute loops
+#define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
 	Main driver program: Construct synthetic problem, run V&V tests, compute benchmark parameters, run benchmark, report results.
@@ -355,10 +356,11 @@ int main(int argc, char * argv[]) {
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
 	double wallTime; 
-	size_t localDataSize = nx*ny*nz; 
+	size_t localDataSize = nx*ny*nz;
 
 	MPI_Request request;
 
+	//size_t localDataSize = A.localNumberOfRows*A.localNumberOfColumns; 
 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
@@ -369,7 +371,27 @@ int main(int argc, char * argv[]) {
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
 	
 		sendTime[i] = MPI_Wtime(); // iocomp - start send timer 
-		dataSend(x.values, &iocompParams, &request, localDataSize); // iocomp - send data to iocomp library 
+		
+		/*
+		 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
+		 * and SIZE_PER_ROW is defined based on value given in generateProblem
+		 * and flatten array
+		 */ 
+		double* superMatrix = (double*)malloc(SIZE_PER_ROW*nrow*sizeof(double)); 
+		malloc_check(superMatrix); 
+		size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
+		
+		for(int i = 0; i < nrow; i++)
+		{
+			for(int j =0 ; j < SIZE_PER_ROW; j++)
+			{
+				superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
+			} 
+		} 
+
+		// iocomp - send data to iocomp library
+		dataSend(superMatrix, &iocompParams, &request, superMatrix_localSize);  
+
 		sendTime[i] = MPI_Wtime() - sendTime[i]; // iocomp - end send timer 
 
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
