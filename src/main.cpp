@@ -357,6 +357,8 @@ int main(int argc, char * argv[]) {
 	double sendTime[numberOfCgSets]; 
 	double sendTimeMatrix[numberOfCgSets]; 
 	double sendTimeVector[numberOfCgSets]; 
+	double waitTimeMatrix[numberOfCgSets]; 
+	double waitTimeVector[numberOfCgSets]; 
 	double wallTime; 
 	MPI_Request requestMatrix, requestVector; 
 	size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
@@ -391,6 +393,11 @@ int main(int argc, char * argv[]) {
 		dataSendTest(&iocompParams,&requestMatrix); // iocomp - test data sends  
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
+	
+		// iocomp - wait for matrix data to be sent fully 
+		waitTimeMatrix[i] = MPI_Wtime(); // iocomp - start wait timer 
+		dataWait(&iocompParams,&requestMatrix);  
+		waitTimeMatrix[i] = MPI_Wtime() - waitTimeMatrix[i]; // iocomp - end wait timer 
 
 		// iocomp - send the vector next 
 		sendTimeVector[i] = MPI_Wtime(); // iocomp - start send timer 
@@ -401,18 +408,19 @@ int main(int argc, char * argv[]) {
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
+		dataSendTest(&iocompParams,&requestVector); // iocomp - test data sends  
 		
-		// iocomp - wait for vector and matrix sent 
-		waitTime[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&requestMatrix);  
+		// iocomp - wait for vector to be sent fully
+		waitTimeVector[i] = MPI_Wtime(); // iocomp - start wait timer 
 		dataWait(&iocompParams,&requestVector);  
-		waitTime[i] = MPI_Wtime() - waitTime[i]; // iocomp - end wait timer 
+		waitTimeVector[i] = MPI_Wtime() - waitTimeVector[i]; // iocomp - end wait timer 
 
 		sendTime[i] = sendTimeMatrix[i] + sendTimeVector[i]; 
+		waitTime[i] = waitTimeMatrix[i] + waitTimeVector[i]; 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
 
-
+	
 	// Compute difference between known exact solution and computed solution
 	// All processors are needed here.
 #ifdef HPCG_DEBUG
