@@ -387,8 +387,8 @@ int main(int argc, char * argv[]) {
 
 		// HPCG compute loop + MPI test for matrix 
 		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
-		dataSendTest(&iocompParams,&requestMatrix); // iocomp - test data sends  
 		ZeroVector(x); // Zero out x
+		dataSendTest(&iocompParams,&requestMatrix); // iocomp - test data sends  
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
 
