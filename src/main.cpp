@@ -61,7 +61,7 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 
-#define MAXITER 1 // arbitrary value to set number of compute loops
+#define MAXITER 10 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
@@ -349,61 +349,66 @@ int main(int argc, char * argv[]) {
 	testnorms_data.samples = numberOfCgSets;
 	testnorms_data.values = new double[numberOfCgSets];
 
-	/* iocomp - define time variables */ 
+	/* iocomp - define variables */ 
 	double startTime[numberOfCgSets]; 
 	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
+	double sendTimeMatrix[numberOfCgSets]; 
+	double sendTimeVector[numberOfCgSets]; 
 	double wallTime; 
-	size_t localDataSize = nx*ny*nz;
+	MPI_Request requestMatrix, requestVector; 
+	size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
+	size_t vector_localSize = nrow; 
 
-	MPI_Request request;
-
-	//size_t localDataSize = A.localNumberOfRows*A.localNumberOfColumns; 
+	/*
+	 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
+	 * and SIZE_PER_ROW is defined based on value given in generateProblem
+	 * and flatten array
+	 */ 
+	double* superMatrix = (double*)malloc(SIZE_PER_ROW*nrow*sizeof(double)); 
+	malloc_check(superMatrix); 
+	for(int i = 0; i < nrow; i++)
+	{
+		for(int j =0 ; j < SIZE_PER_ROW; j++)
+		{
+			superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
+		} 
+	} 
 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
-	
+			
+		// iocomp - send the matrix first  
+		sendTimeMatrix[i] = MPI_Wtime(); // iocomp - start send timer 
+		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); // iocomp - send superMatrix 
+		sendTimeMatrix[i] = MPI_Wtime() - sendTimeMatrix[i]; // iocomp - end send timer 
+
+		// HPCG compute loop + MPI test for matrix 
 		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
+		dataSendTest(&iocompParams,&requestMatrix); // iocomp - test data sends  
 		ZeroVector(x); // Zero out x
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
-	
-		sendTime[i] = MPI_Wtime(); // iocomp - start send timer 
-		
-		/*
-		 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
-		 * and SIZE_PER_ROW is defined based on value given in generateProblem
-		 * and flatten array
-		 */ 
-		double* superMatrix = (double*)malloc(SIZE_PER_ROW*nrow*sizeof(double)); 
-		malloc_check(superMatrix); 
-		size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
-		
-		for(int i = 0; i < nrow; i++)
-		{
-			for(int j =0 ; j < SIZE_PER_ROW; j++)
-			{
-				superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
-			} 
-		} 
 
-		// iocomp - send data to iocomp library
-		dataSend(superMatrix, &iocompParams, &request, superMatrix_localSize);  
-
-		sendTime[i] = MPI_Wtime() - sendTime[i]; // iocomp - end send timer 
+		// iocomp - send the vector next 
+		sendTimeVector[i] = MPI_Wtime(); // iocomp - start send timer 
+		dataSend(x.values, &iocompParams, &requestVector, vector_localSize ); // iocomp - send vector
+		sendTimeVector[i] = MPI_Wtime() - sendTimeVector[i]; // iocomp - end send timer 
 
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
-		dataSendTest(&iocompParams,&request); // iocomp - test data sends  
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
 		
+		// iocomp - wait for vector and matrix sent 
 		waitTime[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&request); // iocomp - wait for data to be fully sent 
+		dataWait(&iocompParams,&requestMatrix);  
+		dataWait(&iocompParams,&requestVector);  
 		waitTime[i] = MPI_Wtime() - waitTime[i]; // iocomp - end wait timer 
 
+		sendTime[i] = sendTimeMatrix[i] + sendTimeVector[i]; 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
 
@@ -421,10 +426,13 @@ int main(int argc, char * argv[]) {
 	ierr = TestNorms(testnorms_data);
 
 	/* Send data from computeServer to ioServerComm */ 
-	walltimeEnd = MPI_Wtime(); // end computeTime 
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
 	wallTime = MPI_Wtime() - walltimeStart; // calculate wall time after finalising io servers 
 	
+	// dealloc superMatrix 
+	free(superMatrix); 
+	superMatrix = NULL; 
+
 	/*
 	 * MPI Reduction for timers 
 	 */ 
