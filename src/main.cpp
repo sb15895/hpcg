@@ -61,7 +61,7 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 
-#define MAXITER 10 // arbitrary value to set number of compute loops
+#define MAXITER 1 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
@@ -399,24 +399,14 @@ int main(int argc, char * argv[]) {
 		dataWait(&iocompParams,&requestMatrix);  
 		waitTimeMatrix[i] = MPI_Wtime() - waitTimeMatrix[i]; // iocomp - end wait timer 
 
-		// iocomp - send the vector next 
-		sendTimeVector[i] = MPI_Wtime(); // iocomp - start send timer 
-		dataSend(x.values, &iocompParams, &requestVector, vector_localSize ); // iocomp - send vector
-		sendTimeVector[i] = MPI_Wtime() - sendTimeVector[i]; // iocomp - end send timer 
-
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
 		dataSendTest(&iocompParams,&requestVector); // iocomp - test data sends  
 		
-		// iocomp - wait for vector to be sent fully
-		waitTimeVector[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&requestVector);  
-		waitTimeVector[i] = MPI_Wtime() - waitTimeVector[i]; // iocomp - end wait timer 
-
-		sendTime[i] = sendTimeMatrix[i] + sendTimeVector[i]; 
-		waitTime[i] = waitTimeMatrix[i] + waitTimeVector[i]; 
+		sendTime[i] = sendTimeMatrix[i];   
+		waitTime[i] = waitTimeMatrix[i]; 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
 
