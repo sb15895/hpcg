@@ -356,20 +356,17 @@ int main(int argc, char * argv[]) {
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
 	double sendTimeMatrix[numberOfCgSets]; 
-	double sendTimeVector[numberOfCgSets]; 
 	double waitTimeMatrix[numberOfCgSets]; 
-	double waitTimeVector[numberOfCgSets]; 
 	double wallTime; 
-	MPI_Request requestMatrix, requestVector; 
+	MPI_Request requestMatrix; 
 	size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
-	size_t vector_localSize = nrow; 
 
 	/*
 	 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
 	 * and SIZE_PER_ROW is defined based on value given in generateProblem
 	 * and flatten array
 	 */ 
-	double* superMatrix = (double*)malloc(SIZE_PER_ROW*nrow*sizeof(double)); 
+	double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
 	malloc_check(superMatrix); 
 	for(int i = 0; i < nrow; i++)
 	{
@@ -403,7 +400,6 @@ int main(int argc, char * argv[]) {
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
-		dataSendTest(&iocompParams,&requestVector); // iocomp - test data sends  
 		
 		sendTime[i] = sendTimeMatrix[i];   
 		waitTime[i] = waitTimeMatrix[i]; 
