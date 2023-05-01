@@ -83,3 +83,21 @@ Known problems and bugs with this release are documented in the file
 
 Check out  the website  http://www.hpcg-benchmark.org/ for the latest
 information and performance results.
+
+# IOCOMP addition changes # 
+For use in ARCHER2:
+## Compilation
+```
+mkdir build
+cd build 
+../configure cray 
+make arch=cray
+``` 
+## Running jobs 
+- change following directories in archer2.slurm 
+```
+export IOCOMP_DIR=<iocomp directory>
+export ADIOS2_DIR=<adios2 directory> 
+export HPCG=<path/to/HPCG/build/xhpcg>
+export CONFIG=<path/to/adios2config.xml>
+```
