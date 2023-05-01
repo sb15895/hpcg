@@ -37,10 +37,10 @@ bar=$(IFS=, ; echo "${updated[*]}")
 
 if (($MAP == 1)); then 
   TOTAL_RANKS=$((${NUM_NODES} * ${FULL_CORES}))
-  map -n $TOTAL_RANKS --mpiargs="--hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 
+  map -n $TOTAL_RANKS --mpiargs="--hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=1 
 
 else
-  srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
+  srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=1 > test.out
 fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out
