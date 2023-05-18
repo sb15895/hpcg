@@ -17,9 +17,14 @@ if (( ${SLURM_NNODES} > 1  )); then
   vals=($(seq 0 1 $(eval echo ${end})))
   bar=$(IFS=, ; echo "${vals[*]}")
 
+  TOTAL_RANKS=$((${NUM_NODES} * ${END_CORES} ))
   HALF_TASKS=$((${SLURM_NNODES}*${SLURM_NTASKS_PER_NODE}/2)) # half the number of total tasks divided between the allocated nodes 
 
-  srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=0 > test.out
+  if (($MAP == 1)); then 
+    map -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]}" --profile ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=0
+  else
+    srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_TASKS} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=0 > test.out
+  fi 
 
 else
   NUM_NODES=${SLURM_NNODES} 

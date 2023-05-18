@@ -27,6 +27,7 @@ if ((${MAP} == 1)); then
   map -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread --distribution=block:block --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} --overcommit" --profile  ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=1
 else 
   srun --hint=nomultithread --distribution=block:block --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} --overcommit ${HPCG} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${m} --HT=1 > test.out
+fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out
 echo "JOB NAME" ${SLURM_JOB_NAME} >> test.out
