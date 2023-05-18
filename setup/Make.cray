@@ -91,7 +91,7 @@ MPlib        =$(MPdir)/lib
 # ----------------------------------------------------------------------
 #
 HPCG_INCLUDES = -I$(INCdir) -I$(INCdir)/$(arch) $(MPinc) -I$(IOCOMP_DIR)/include -I$(ADIOS2_DIR)/include -I$(HDF5_DIR)/include
-HPCG_LIBS     = -L$(IOCOMP_DIR)/lib -liocomp -L$(HDF5_DIR)/lib -lhdf5_hl -lhdf5  -L$(ADIOS2_DIR)/lib -ladios2_c -ladios2_c_mpi -L$(ADIOS2_DIR)/lib64 -ladios2_c -ladios2_c_mpi  -lm
+HPCG_LIBS     = -L$(IOCOMP_DIR)/lib -liocomp -L$(HDF5_DIR)/lib -lhdf5_hl -lhdf5  -L$(ADIOS2_DIR)/lib -ladios2_c -ladios2_c_mpi -L$(ADIOS2_DIR)/lib64 -ladios2_c -ladios2_c_mpi  -lm \
 #
 # - Compile time options -----------------------------------------------
 #
