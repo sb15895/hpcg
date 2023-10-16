@@ -61,7 +61,7 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 
-#define MAXITER 3 // arbitrary value to set number of compute loops
+#define MAXITER 10 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
@@ -366,8 +366,11 @@ int main(int argc, char * argv[]) {
 	 * and SIZE_PER_ROW is defined based on value given in generateProblem
 	 * and flatten array
 	 */ 
-	double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
-	malloc_check(superMatrix); 
+	// double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
+	double* superMatrix = NULL; 
+	winInits(&iocompParams, superMatrix_localSize);
+	superMatrix = iocompParams.array[0]; 
+
 	for(int i = 0; i < nrow; i++)
 	{
 		for(int j =0 ; j < SIZE_PER_ROW; j++)
@@ -380,6 +383,9 @@ int main(int argc, char * argv[]) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
 			
 		// iocomp - send the matrix first  
+		winActivateInfo(&iocompParams, superMatrix); 
+		preDataSend(&iocompParams, superMatrix); 
+
 		sendTimeMatrix[i] = MPI_Wtime(); // iocomp - start send timer 
 		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); // iocomp - send superMatrix 
 		sendTimeMatrix[i] = MPI_Wtime() - sendTimeMatrix[i]; // iocomp - end send timer 
@@ -387,13 +393,20 @@ int main(int argc, char * argv[]) {
 		// HPCG compute loop + MPI test for matrix 
 		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
 		ZeroVector(x); // Zero out x
-		dataSendTest(&iocompParams,&requestMatrix); // iocomp - test data sends  
+		
+		dataSendTest(&iocompParams,&requestMatrix, superMatrix); // iocomp - test data sends  
+		winTestInfo(&iocompParams, superMatrix);
+		// preDataSend(&iocompParams, superMatrix); 
+		dataSendInfo(&iocompParams); 
+
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
 		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
 	
 		// iocomp - wait for matrix data to be sent fully 
 		waitTimeMatrix[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&requestMatrix);  
+		dataWait(&iocompParams,&requestMatrix, superMatrix);  
+		// preDataSend(&iocompParams, superMatrix); 
+		dataSendInfo(&iocompParams); 
 		waitTimeMatrix[i] = MPI_Wtime() - waitTimeMatrix[i]; // iocomp - end wait timer 
 
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
@@ -405,9 +418,8 @@ int main(int argc, char * argv[]) {
 		waitTime[i] = waitTimeMatrix[i]; 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
+	printf("Finished with loop \n"); 
 
-	
-	// Compute difference between known exact solution and computed solution
 	// All processors are needed here.
 #ifdef HPCG_DEBUG
 	double residual = 0;
@@ -423,9 +435,10 @@ int main(int argc, char * argv[]) {
 	stopSend(&iocompParams); // send ghost message to stop MPI_Recvs 
 	wallTime = MPI_Wtime() - walltimeStart; // calculate wall time after finalising io servers 
 	
-	// dealloc superMatrix 
-	free(superMatrix); 
-	superMatrix = NULL; 
+	// dealloc superMatrix NA to shared Mem 
+	// free(superMatrix); 
+	// superMatrix = NULL; 
+
 
 	/*
 	 * MPI Reduction for timers 
@@ -442,6 +455,7 @@ int main(int argc, char * argv[]) {
 	MPI_Reduce(sendTime,sendTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
 	MPI_Reduce(waitTime,waitTime_Reduced, numberOfCgSets, MPI_DOUBLE, MPI_MAX, 0, comm);  
 	MPI_Reduce(&wallTime,&wallTime_Reduced, 1, MPI_DOUBLE, MPI_MAX, 0, comm);  
+
 
 	/* iocomp - open and write to file by rank 0 */ 
 	if(rank == 0)

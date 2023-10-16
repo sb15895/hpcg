@@ -71,7 +71,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   char ** argv = *argv_p;
   char fname[80];
   int i, j, *iparams;
-  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz=", "--io=", "--HT="};
+  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz=", "--io=", "--HT=", "--sh"};
   time_t rawtime;
   tm * ptm;
   const int nparams = (sizeof cparams) / (sizeof cparams[0]);
@@ -114,9 +114,12 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	/*
 	 * iocomp integration 
 	 */ 
-	int HT_flag = iparams[11]; // iocomp -> set HT flag 
-	int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
-	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE); // iocomp -> initialise iocomp library 
+	// int HT_flag = iparams[11]; // iocomp -> set HT flag 
+	// int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
+	int HT_flag = 0; // iocomp -> set HT flag 
+	int ioLibNum = 1; // iocomp -> set ioLibNum 
+	bool sharedFlag = 1;
+	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE, sharedFlag); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
