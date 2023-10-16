@@ -418,7 +418,6 @@ int main(int argc, char * argv[]) {
 		waitTime[i] = waitTimeMatrix[i]; 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
-	printf("Finished with loop \n"); 
 
 	// All processors are needed here.
 #ifdef HPCG_DEBUG

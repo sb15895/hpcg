@@ -71,7 +71,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   char ** argv = *argv_p;
   char fname[80];
   int i, j, *iparams;
-  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz=", "--io=", "--HT=", "--sh"};
+  char cparams[][7] = {"--nx=", "--ny=", "--nz=", "--rt=", "--pz=", "--zl=", "--zu=", "--npx=", "--npy=", "--npz=", "--io=", "--HT=", "--sh="};
   time_t rawtime;
   tm * ptm;
   const int nparams = (sizeof cparams) / (sizeof cparams[0]);
@@ -113,12 +113,19 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 
 	/*
 	 * iocomp integration 
-	 */ 
-	// int HT_flag = iparams[11]; // iocomp -> set HT flag 
-	// int ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
-	int HT_flag = 0; // iocomp -> set HT flag 
-	int ioLibNum = 1; // iocomp -> set ioLibNum 
-	bool sharedFlag = 1;
+	 */
+	int HT_flag, ioLibNum, sharedFlag; 
+	// initialise parameters
+	HT_flag = 0; 
+	ioLibNum = 0; 
+	sharedFlag = 0; 
+	
+	// get flags from command line parameters 
+	HT_flag = iparams[11]; // iocomp -> set HT flag 
+	ioLibNum = iparams[10]; // iocomp -> set ioLibNum 
+	sharedFlag = iparams[12]; // iocomp -> set shared flag
+
+	// initialise iocomp and get communicator back 
 	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE, sharedFlag); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
@@ -147,7 +154,8 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
   MPI_Comm_size( comm, &params.comm_size );
 	if(!params.comm_rank) 
 	{
-		std::cout<<"HT flag"<<HT_flag<<"ioLibNum"<<ioLibNum<<std::endl; // testing for command line paramets  
+		std::cout<<"Problem size: "<<params.nx<<"x"<<params.ny<<"x"<<params.nz<<std::endl; // testing for command line paramets  
+		std::cout<<"iocomp parameters: HT flag "<<HT_flag<<" ioLibNum "<<ioLibNum<<" Shared flag "<<sharedFlag<<std::endl; // testing for command line paramets  
 	} 
 #else
   params.comm_rank = 0;
