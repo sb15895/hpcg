@@ -360,6 +360,8 @@ int main(int argc, char * argv[]) {
 	double wallTime; 
 	MPI_Request requestMatrix; 
 	size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
+	
+	char fileName[50] = { "matrix" } ; // to avoid the C++ to C const char[] to char* warning 
 
 	/*
 	 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
@@ -369,22 +371,36 @@ int main(int argc, char * argv[]) {
 	// double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
 	double* superMatrix = NULL; 
 	winInits(&iocompParams, superMatrix_localSize);
+	std::cout<<"after win inits with local size "<<superMatrix_localSize<<std::endl;
 	superMatrix = iocompParams.array[0]; 
-
-	for(int i = 0; i < nrow; i++)
+	std::cout<<"after matrix allocated"<<std::endl;
+	
+	// initialise matrix and synchronise this array only if shared array 
+	if(iocompParams.sharedFlag)
 	{
-		for(int j =0 ; j < SIZE_PER_ROW; j++)
+		winActivateInfo(&iocompParams, superMatrix);
+		preDataSend(&iocompParams, superMatrix, fileName); 
+		for(int i = 0; i < nrow; i++)
 		{
-			superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
-		} 
+			for(int j =0 ; j < SIZE_PER_ROW; j++)
+			{
+				superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
+			} 
+		}
+		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); 
+		dataWait(&iocompParams,&requestMatrix, superMatrix, fileName);  
+		// preDataSend(&iocompParams, superMatrix); 
+		dataSendInfo(&iocompParams); 
 	} 
+	std::cout<<"Before CG loop"<<std::endl;
 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
 			
 		// iocomp - send the matrix first  
 		winActivateInfo(&iocompParams, superMatrix); 
-		preDataSend(&iocompParams, superMatrix); 
+		snprintf(fileName, sizeof(fileName), "matrix_%i", i); 
+		preDataSend(&iocompParams, superMatrix, fileName); 
 
 		sendTimeMatrix[i] = MPI_Wtime(); // iocomp - start send timer 
 		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); // iocomp - send superMatrix 
@@ -404,7 +420,7 @@ int main(int argc, char * argv[]) {
 	
 		// iocomp - wait for matrix data to be sent fully 
 		waitTimeMatrix[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&requestMatrix, superMatrix);  
+		dataWait(&iocompParams,&requestMatrix, superMatrix, fileName);  
 		// preDataSend(&iocompParams, superMatrix); 
 		dataSendInfo(&iocompParams); 
 		waitTimeMatrix[i] = MPI_Wtime() - waitTimeMatrix[i]; // iocomp - end wait timer 
@@ -485,6 +501,7 @@ int main(int argc, char * argv[]) {
 	DeleteVector(x_overlap);
 	DeleteVector(b_computed);
 	delete [] testnorms_data.values;
+	// winFinalise(&iocompParams); 
 
 	HPCG_Finalize();
 	

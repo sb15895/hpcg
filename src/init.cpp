@@ -114,11 +114,12 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	/*
 	 * iocomp integration 
 	 */
-	int HT_flag, ioLibNum, sharedFlag; 
+	int HT_flag, ioLibNum, sharedFlag, numWin; 
 	// initialise parameters
 	HT_flag = 0; 
 	ioLibNum = 0; 
 	sharedFlag = 0; 
+	numWin = 1; 
 	
 	// get flags from command line parameters 
 	HT_flag = iparams[11]; // iocomp -> set HT flag 
@@ -126,7 +127,7 @@ HPCG_Init(int * argc_p, char ** *argv_p, HPCG_Params & params, struct iocomp_par
 	sharedFlag = iparams[12]; // iocomp -> set shared flag
 
 	// initialise iocomp and get communicator back 
-	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE, sharedFlag); // iocomp -> initialise iocomp library 
+	MPI_Comm comm = iocompInit(iocompParams, globalComm, HT_flag, ioLibNum, NODESIZE, sharedFlag, numWin); // iocomp -> initialise iocomp library 
 
 // Broadcast values of iparams to all MPI processes
 #ifndef HPCG_NO_MPI
