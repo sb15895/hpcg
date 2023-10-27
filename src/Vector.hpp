@@ -23,7 +23,8 @@
 #include <cassert>
 #include <cstdlib>
 #include "Geometry.hpp"
-
+#include "mpi.h"
+#include "iocomp.h"
 struct Vector_STRUCT {
   local_int_t localLength;  //!< length of local portion of the vector
   double * values;          //!< array of values
@@ -45,6 +46,22 @@ typedef struct Vector_STRUCT Vector;
 inline void InitializeVector(Vector & v, local_int_t localLength) {
   v.localLength = localLength;
   v.values = new double[localLength];
+  v.optimizationData = 0;
+  return;
+}
+// overloaded function to initialise vector using winInits. 
+inline void InitializeVector(Vector & v, local_int_t localLength, iocomp_params *iocompParams) {
+  v.localLength = localLength;
+  // v.values = new double[localLength];
+  if(iocompParams!=NULL)
+  {
+    winInits(iocompParams, localLength); 
+    v.values=iocompParams->array[0]; 
+  } 
+  else
+  {
+    v.values = new double[localLength];
+  }
   v.optimizationData = 0;
   return;
 }

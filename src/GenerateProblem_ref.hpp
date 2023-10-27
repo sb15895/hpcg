@@ -16,6 +16,7 @@
 #define GENERATEPROBLEM_REF_HPP
 #include "SparseMatrix.hpp"
 #include "Vector.hpp"
+#include "iocomp.h"
 
-void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact);
+void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact, iocomp_params *iocompParams);
 #endif // GENERATEPROBLEM_REF_HPP

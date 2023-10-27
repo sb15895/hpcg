@@ -34,6 +34,7 @@ using std::endl;
 #include <cassert>
 
 #include "GenerateProblem_ref.hpp"
+#include "iocomp.h"
 
 
 /*!
@@ -47,7 +48,7 @@ using std::endl;
   @see GenerateGeometry
 */
 
-void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact) {
+void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexact, iocomp_params *iocompParams) {
 
   // Make local copies of geometry information.  Use global_int_t since the RHS products in the calculations
   // below may result in global range values.
@@ -82,9 +83,9 @@ void GenerateProblem_ref(SparseMatrix & A, Vector * b, Vector * x, Vector * xexa
   double ** matrixValues = new double*[localNumberOfRows];
   double ** matrixDiagonal = new double*[localNumberOfRows];
 
-  if (b!=0) InitializeVector(*b, localNumberOfRows);
-  if (x!=0) InitializeVector(*x, localNumberOfRows);
-  if (xexact!=0) InitializeVector(*xexact, localNumberOfRows);
+  if (b!=0) InitializeVector(*b, localNumberOfRows, NULL);
+  if (x!=0) InitializeVector(*x, localNumberOfRows, iocompParams);
+  if (xexact!=0) InitializeVector(*xexact, localNumberOfRows, NULL);
   double * bv = 0;
   double * xv = 0;
   double * xexactv = 0;
