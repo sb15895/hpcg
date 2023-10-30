@@ -61,7 +61,7 @@ using std::endl;
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
 
-#define MAXITER 10 // arbitrary value to set number of compute loops
+#define MAXITER 1 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
@@ -495,15 +495,15 @@ int main(int argc, char * argv[]) {
 	// Clean up
 	DeleteMatrix(A); // This delete will recursively delete all coarse grid data
 	DeleteCGData(data);
-	DeleteVector(x);
+	DeleteVector(x, &iocompParams); // overloaded function to finalise windows if shared windows used.
 	DeleteVector(b);
 	DeleteVector(xexact);
 	DeleteVector(x_overlap);
 	DeleteVector(b_computed);
 	delete [] testnorms_data.values;
-	// winFinalise(&iocompParams); 
 
 	HPCG_Finalize();
+	printf("after HPCG finalise \n"); 
 	
 #ifndef HPCG_NO_MPI
 	MPI_Finalize();
