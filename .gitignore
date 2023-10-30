@@ -6,3 +6,11 @@ bin/HPCG-Benchmark_3*.txt
 bin/xhpcg
 bin/hpcg20*.txt
 .DS_Store
+build/testing/*
+build/src/*.o
+build/bin/*
+run_dir/**
+!run_dir/*.sh 
+!run_dir/*.slurm
+
+!build/testing/run.sh
