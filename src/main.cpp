@@ -60,6 +60,7 @@ using std::endl;
 #include "TestCG.hpp"
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
+#include "adios2_c.h"
 
 #define MAXITER 1 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 

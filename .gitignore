@@ -9,6 +9,8 @@ bin/hpcg20*.txt
 build/testing/*
 build/src/*.o
 build/bin/*
+build/**
+map_build/**
 run_dir/**
 !run_dir/*.sh 
 !run_dir/*.slurm
