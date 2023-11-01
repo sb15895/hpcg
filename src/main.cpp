@@ -350,49 +350,14 @@ int main(int argc, char * argv[]) {
 	testnorms_data.values = new double[numberOfCgSets];
 
 	/* iocomp - define variables */ 
-	double startTime[numberOfCgSets]; 
 	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
-	double sendTimeMatrix[numberOfCgSets]; 
-	double waitTimeMatrix[numberOfCgSets]; 
 	double wallTime; 
 	MPI_Request requestMatrix; 
-	// size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
 	
 	char fileName[50]; // to avoid the C++ to C const char[] to char* warning 
-
-	/*
-	 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
-	 * and SIZE_PER_ROW is defined based on value given in generateProblem
-	 * and flatten array
-	 */ 
-	// double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
-	// double* superMatrix = NULL; 
-	// winInits(&iocompParams, superMatrix_localSize);
-	// std::cout<<"after win inits with local size "<<superMatrix_localSize<<std::endl;
-	// superMatrix = iocompParams.array[0]; 
-	// std::cout<<"after matrix allocated"<<std::endl;
-	
-//	// initialise matrix and synchronise this array only if shared array 
-//	if(iocompParams.sharedFlag)
-//	{
-//		winActivateInfo(&iocompParams, superMatrix);
-//		preDataSend(&iocompParams, superMatrix, fileName); 
-//		for(int i = 0; i < nrow; i++)
-//		{
-//			for(int j =0 ; j < SIZE_PER_ROW; j++)
-//			{
-//				superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
-//			} 
-//		}
-//		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); 
-//		dataWait(&iocompParams,&requestMatrix, superMatrix, fileName);  
-//		// preDataSend(&iocompParams, superMatrix); 
-//		dataSendInfo(&iocompParams); 
-//	} 
-//	std::cout<<"Before CG loop"<<std::endl;
 
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
