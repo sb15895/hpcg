@@ -1,23 +1,21 @@
-export CASE=Consecutive
-export RUNDIR=${PARENT_DIR}/${CASE}/$i
-echo "**" $CASE 
-echo $RUNDIR
-rm -rf ${RUNDIR}
-mkdir -p ${RUNDIR}
-lfs setstripe -c -1  ${RUNDIR}
-cd ${RUNDIR} 
-cp ${CONFIG} . 
+export CASE=Consecutive/${FLAG}
 
-end=$((${FULL_CORES}-1))
+# setup of directories and copying of config files and make outputs.
+source ${SLURM_SUBMIT_DIR}/slurm_files/setup.sh 
+
+END_CORES=${SLURM_NTASKS_PER_NODE}
+
+# Generate sequence from 0 to PPN 
+end=$((${END_CORES}-1))
 vals=($(seq 0 1 $(eval echo ${end})))
 bar=$(IFS=, ; echo "${vals[*]}")
 
-TOTAL_RANKS=$((${SLURM_NNODES} * ${SLURM_NTASKS_PER_NODE} ))
-if (($MAP == 1)); then 
-  map -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block  --nodes=${SLURM_NNODES} --cpu-bind=map_cpu:${bar[@]}" --profile  ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1
 
+if (( ${MAP} == 1  )); then 
+  TOTAL_RANKS=$(( ${SLURM_NNODES} * ${FULL_CORES} ))
+  map --mpi=slurm -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block" --profile  ${EXE} --HT --nx ${NX} --ny ${NY}  --io ${IO}
 else 
-  srun  --hint=nomultithread  --distribution=block:block  --nodes=${SLURM_NNODES} --cpu-bind=map_cpu:${bar[@]} ${HPCG} --nx=${SIZE} --ny=${SIZE} --nz=${SIZE} --io=${m} --HT=1 > test.out
+  srun  --hint=nomultithread  --distribution=block:block --cpu-bind=map_cpu:${bar[@]} ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT} > test.out 
 fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out
