@@ -356,7 +356,10 @@ int main(int argc, char * argv[]) {
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
 	double wallTime; 
-	MPI_Request requestMatrix; 
+	MPI_Request requestMatrix;
+
+	// extensions for IO libraries
+	char ext[5][5] = {".dat", ".h5", ".h5", "", ""}; 
 	
 	char fileName[50]; // to avoid the C++ to C const char[] to char* warning 
 
@@ -365,7 +368,7 @@ int main(int argc, char * argv[]) {
 
 		// iocomp - activate windows in case of shared memory 
 		winActivateInfo(&iocompParams, x.values); 
-		snprintf(fileName, sizeof(fileName), "x_%i", i); 
+		snprintf(fileName, sizeof(fileName), "x_%i%s", i, ext[iocompParams.ioLibNum]); 
 		preDataSend(&iocompParams, x.values, fileName); 
 
 		// HPCG compute loop and record compute time 
