@@ -21,6 +21,10 @@ void arguments(struct test_params* testParams, int argc, char** argv)
 		{
 			testParams->ny = atoi(argv[i+1]);  
 		}
+		else if(strcmp(argv[i], "--nz") == 0) 
+		{
+			testParams->nz = atoi(argv[i+1]);  
+		}
 		else if(strcmp(argv[i], "--io") == 0) 
 		{
 			testParams->io = atoi(argv[i+1]);  

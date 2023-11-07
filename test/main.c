@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 	 * initialise stream param structs using command line parameters
 	 */ 
 	arguments(&testParams, argc, argv); 
-	testParams.localDataSize = testParams.nx * testParams.ny;
+	testParams.localDataSize = testParams.nx * testParams.ny * testParams.nz;
 
 	MPI_Comm comm = MPI_COMM_WORLD; 
 	int rank; 
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
 	if(!rank){
 		printf("Testing for HPCG benchmark output started. \n"); 
-		printf("Size of array %i x %i IO num %i \n", testParams.nx, testParams.ny, testParams.io); 
+		printf("Size of array %i x %i x %i IO num %i \n", testParams.nx, testParams.ny, testParams.nz, testParams.io); 
 	} 
 
 	/*

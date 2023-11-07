@@ -14,5 +14,5 @@ map_build/**
 run_dir/**
 !run_dir/*.sh 
 !run_dir/*.slurm
-
+test/Object_files
 !build/testing/run.sh

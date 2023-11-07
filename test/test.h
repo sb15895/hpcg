@@ -23,7 +23,7 @@ struct test_params{
 
 	// command line args 
 	bool HT_flag, sharedFlag, testFlag, verbose; 
-	int nx, ny, io; 
+	int nx, ny,nz, io; 
 
 	// file object for debug 
 	char debugFile[100]; 
