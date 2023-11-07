@@ -15,4 +15,5 @@ run_dir/**
 !run_dir/*.sh 
 !run_dir/*.slurm
 test/Object_files
+test/**
 !build/testing/run.sh
