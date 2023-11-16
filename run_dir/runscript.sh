@@ -10,27 +10,27 @@ NY=$((2**6))
 NZ=$((2**6)) 
 
 # node start and end as power of 2s 
-NODE_START=0
-NODE_END=0
+NODE_START=1
+NODE_END=7
 
 # I/O selection range 
 IO_START=0
-IO_END=0
+IO_END=3
 
 # Job numbers for averaging 
-ARRAY="0"
+ARRAY="0-2"
 
 # time per job for custom time
-TIME="00:10:00"
+# TIME="00:10:00"
 
 # Directory for the tests 
 # DIR=OUTPUT/v2.0.0/TESTING
-DIR=TESTING
+# DIR=TESTING
 
 # weak scaling script 
-source weakScaling.sh 
+# source weakScaling.sh 
 
 # directory for strong scaling 
-#DIR=v1.1.4/STRONG
-#source strongScaling.sh 
+DIR=v2.0.0/STRONG/GLOBAL_256MiB
+source strongScaling.sh 
 
