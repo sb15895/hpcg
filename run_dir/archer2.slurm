@@ -52,27 +52,27 @@ do
 
   # Case 1 
   export SHARED=0; export HT=0
-	source ${SLURM_SUBMIT_DIR}/slurm_files/sequential.sh
+	source ${SLURM_SUBMIT_DIR}/eq_global_size/sequential.sh
 	wait 
 
   # Case 2
   export SHARED=0; export HT=1; export FLAG=HT
-	source ${SLURM_SUBMIT_DIR}/slurm_files/hyperthread.sh 
+	source ${SLURM_SUBMIT_DIR}/eq_global_size/hyperthread.sh 
 	wait 
 
   # Case 3
   export SHARED=1; export HT=0; export FLAG=shared
-	source ${SLURM_SUBMIT_DIR}/slurm_files/hyperthread.sh 
+	source ${SLURM_SUBMIT_DIR}/eq_global_size/hyperthread.sh 
 	wait 
 
   # Case 4
   export SHARED=0; export HT=1; export FLAG=HT
-	source ${SLURM_SUBMIT_DIR}/slurm_files/consecutive.sh
+	source ${SLURM_SUBMIT_DIR}/eq_global_size/consecutive.sh
 	wait 
 
   # Case 5
   export SHARED=1; export HT=0; export FLAG=shared
-	source ${SLURM_SUBMIT_DIR}/slurm_files/consecutive.sh
+	source ${SLURM_SUBMIT_DIR}/eq_global_size/consecutive.sh
 	wait 
 done 
 
