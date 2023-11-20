@@ -15,19 +15,17 @@ NODE_END=7
 
 # I/O selection range 
 IO_START=0
-IO_END=3
+IO_END=0
 
 # Job numbers for averaging 
-ARRAY="0-2"
+ARRAY="1-2"
 
 # time per job for custom time
-# TIME="00:10:00"
+# TIME="01:00:00"
 
-# Directory for the tests 
+# weak scaling script and directory
 # DIR=OUTPUT/v2.0.0/TESTING
 # DIR=TESTING
-
-# weak scaling script 
 # source weakScaling.sh 
 
 # directory for strong scaling 

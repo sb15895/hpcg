@@ -24,6 +24,7 @@ export ADIOS2_DIR=/work/e609/e609/shr203/opt/gnu/8.0.0/ADIOS2
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${ADIOS2_DIR}/lib64:${IOCOMP_DIR}/lib
 # export HPCG=/work/e609/e609/shr203/hpcg/build/bin/xhpcg
 export EXE=${HPCG_DIR}/build/bin/xhpcg
+export TEST_EXE=${HPCG_DIR}/test/test
 export CONFIG=${HPCG_DIR}/run_dir/config.xml 
 
 # avg jobs directories
@@ -38,7 +39,7 @@ export OMP_NUM_THREADS=1
 
 # Make new directory 
 IOLAYERS=("MPIIO" "HDF5" "ADIOS2_HDF5" "ADIOS2_BP4" "ADIOS2_BP5") # assign IO layer array 
-SIZE=$(( ${NX}*${NY}*${NZ}*8 / 2**20 )) # local size in MiB
+SIZE=$(( ${NX}*${NY}*${NZ}*8 / 2**10 )) # local size in KiB
 
 #switch off MAP 
 MAP=0
@@ -47,7 +48,7 @@ echo "Job started " $(date +"%T") # start time
 
 for IO in $(seq ${IO_START} ${IO_END})
 do 
-  export PARENT_DIR=${SLURM_SUBMIT_DIR}/${DIR}/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${SIZE}MiB/${IOLAYERS[${IO}]}
+  export PARENT_DIR=${SLURM_SUBMIT_DIR}/${DIR}/${SLURM_NNODES}_${SLURM_NTASKS_PER_NODE}/${SIZE}KiB/${IOLAYERS[${IO}]}
 
   # Case 1 
   export SHARED=0; export HT=0

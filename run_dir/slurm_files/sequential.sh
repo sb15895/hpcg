@@ -24,7 +24,10 @@ if (( ${MAP} == 1  )); then
   map --mpi=slurm -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]}" --profile  ${EXE} --nx ${NX} --ny ${NY} --io ${IO}
 else 
   srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${NUM_TASKS} --cpu-bind=map_cpu:${bar[@]} ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT} > test.out
-
+  wait 
+  echo TESTING with ${NUM_NODES} nodes and ${NUM_TASKS} tasks ${END_CORES} tasks per node.
+  srun  --nodes=${NUM_NODES} --ntasks-per-node=${END_CORES} --ntasks=${NUM_TASKS} ${TEST_EXE} --nx ${NX} --ny ${NY} --nz ${NZ} --io ${IO} >> test.out
+  wait 
 fi 
 
 echo "JOB ID"  $SLURM_JOBID >> test.out
