@@ -1,7 +1,7 @@
 export CASE=Hyperthread/${FLAG} 
 
 # setup of directories and copying of config files and make outputs.
-source ${SLURM_SUBMIT_DIR}/slurm_files/setup.sh 
+source ${SLURM_SUBMIT_DIR}/eq_local_size/setup.sh 
 
 # if more than 1 node, then HT uses half the number of nodes. 
 # If less than 1 node, then HT uses half the number of cores.
@@ -26,7 +26,13 @@ updated=("${vals[@]}" "${vals_HT[@]}")
 bar=$(IFS=, ; echo "${updated[*]}")
 
 if (( ${MAP} == 1  )); then 
-  map -n $TOTAL_RANKS --mpiargs="--hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]}" --profile ${EXE} --HT --size ${SIZE} --io ${IO} > test.out
+  TOTAL_RANKS=$(( ${NUM_NODES} * ${END_CORES} )) 
+  map --mpi=slurm -n $TOTAL_RANKS --mpiargs="--hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]}" --profile --perf-metrics="instructions; cpu-cycles; cache-misses; cache-references;" ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT}  > test.out
+  wait 
+  # delete file outputs from map run as they are not going to be tested. 
+  rm *.dat 
+  rm *.h5 
+  rm -rf x_* 
 else
   srun  --hint=multithread --distribution=block:block  --nodes=${NUM_NODES} --cpu-bind=map_cpu:${bar[@]} ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT} > test.out 
   wait 

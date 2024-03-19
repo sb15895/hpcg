@@ -1,7 +1,7 @@
 export CASE=Sequential
 
 # setup of directories and copying of config files and make outputs.
-source ${SLURM_SUBMIT_DIR}/slurm_files/setup.sh 
+source ${SLURM_SUBMIT_DIR}/eq_local_size/setup.sh 
 
 if (( ${SLURM_NNODES} > 1  )); then 
   NUM_NODES=$((${SLURM_NNODES}/2))  
@@ -21,7 +21,12 @@ bar=$(IFS=, ; echo "${vals[*]}")
 
 if (( ${MAP} == 1  )); then 
   TOTAL_RANKS=$((${NUM_NODES}*${END_CORES}))
-  map --mpi=slurm -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${HALF_CORES} --cpu-bind=map_cpu:${bar[@]}" --profile  ${EXE} --nx ${NX} --ny ${NY} --io ${IO}
+  map --mpi=slurm -n ${TOTAL_RANKS} --mpiargs="--hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${NUM_TASKS} --cpu-bind=map_cpu:${bar[@]}" --profile  --perf-metrics="instructions; cpu-cycles; cache-misses; cache-references;" ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT} > test.out 
+  wait 
+  # delete file outputs from map run as they are not going to be tested. 
+  rm *.dat 
+  rm *.h5 
+  rm -rf x_* 
 else 
   srun  --hint=nomultithread  --distribution=block:block --nodes=${NUM_NODES} --ntasks=${NUM_TASKS} --cpu-bind=map_cpu:${bar[@]} ${EXE} --nx=${NX} --ny=${NY} --nz=${NZ} --io=${IO} --sh=${SHARED} --HT=${HT} > test.out
   wait 

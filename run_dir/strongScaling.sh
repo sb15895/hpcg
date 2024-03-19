@@ -42,6 +42,6 @@ do
   FILESIZE_LOCAL=$((${NX_LOCAL} * ${NY_LOCAL} * ${NZ_LOCAL} * 8/ 2**10)) 
   echo NODES ${NUM_NODES} ARRAY SIZE ${NX_LOCAL} x ${NY_LOCAL} x ${NZ_LOCAL} Local size ${FILESIZE_LOCAL}KiB Global size ${FILESIZE_GLOBAL}MiB JOB ARRAY ${ARRAY} TIME ${TIME_VAR} IO ${IO_START} to ${IO_END} 
 
-  sbatch --export=ALL,SIZE=${SIZE_LOCAL},NX=${NX_LOCAL},NY=${NY_LOCAL},NZ=${NZ_LOCAL},DIR=${DIR},IO_START=${IO_START},IO_END=${IO_END},FLAG=${FLAG} --qos=standard --nodes=${NUM_NODES} --ntasks-per-node=${PPN} --time=${TIME_VAR} --array=${ARRAY}  archer2.slurm 
+  sbatch --export=ALL,SIZE=${SIZE_LOCAL},NX=${NX_LOCAL},NY=${NY_LOCAL},NZ=${NZ_LOCAL},DIR=${DIR},IO_START=${IO_START},IO_END=${IO_END},FLAG=${FLAG} --qos=standard --nodes=${NUM_NODES} --ntasks-per-node=${PPN} --time=${TIME_VAR} --array=${ARRAY} --wait  archer2.slurm 
 done 
 
