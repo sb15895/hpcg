@@ -55,7 +55,7 @@ fi
 IOLAYERS=("MPIIO" "HDF5" "ADIOS2_HDF5" "ADIOS2_BP4" "ADIOS2_BP5") # assign IO layer array 
 IOLAYERS_EXT=("*.dat" "*.h5" "*.h5") # assign IO layer array 
 CASES=("Sequential" "Hyperthread/split" "Hyperthread/shared" "Consecutive/split" "Consecutive/shared")
-SIZE=$(( ${NX}*${NY}*8 / 2**10 )) # local size in KiB
+SIZE=$(( ${NX}*${NY}*${NZ}*8 / 2**10 )) # local size in KiB
 
 echo "Job started " $(date +"%T") "size " ${SIZE} KiB # start time
 
@@ -75,7 +75,7 @@ fi
 for IO in $(seq ${IO_START} ${IO_END})
 do 
   # specify hints if IO library is HDF5 or MPIIO 
-  if (( ${IO} == 0 || ${IO} == 1)); 
+  if (( ${IO} == 0 || ${IO} == 1 || ${IO} == 2); 
   then 
     export MPICH_MPIIO_HINTS="${IOLAYERS_EXT[${IO}]}:romio_cb_write=disable"
   fi 
@@ -95,36 +95,41 @@ do
     if (( ${MAPPING_CASE} == 0 )); 
     then 
       export HINT="nomultithread"
-      export FLAG="" 
+      export SHARED=0 
+      export HT=0 
       source ${SLURM_SUBMIT_DIR}/bash_scripts/sequential.sh 
 
     # CASE 1: HT/split
     elif (( ${MAPPING_CASE} == 1 )); 
     then
-      export FLAG="HT"
       export HINT="multithread"
+      export SHARED=0
+      export HT=1
       source ${SLURM_SUBMIT_DIR}/bash_scripts/hyperthread_shared.sh 
       # source ${SLURM_SUBMIT_DIR}/bash_scripts/hyperthread.sh 
 
     # CASE 2: HT/shared
     elif (( ${MAPPING_CASE} == 2 )); 
     then 
-      export FLAG="shared"
       export HINT="multithread"
+      export SHARED=1
+      export HT=0
       source ${SLURM_SUBMIT_DIR}/bash_scripts/hyperthread_shared.sh 
 
     # CASE 3: Consecutive/split
     elif (( ${MAPPING_CASE} == 3 )); 
     then 
-      export FLAG="HT"
       export HINT="nomultithread"
+      export SHARED=0
+      export HT=1
       source ${SLURM_SUBMIT_DIR}/bash_scripts/consecutive.sh
 
     # CASE 4: Consecutive/shared
     elif (( ${MAPPING_CASE} == 4)); 
     then 
-      export FLAG="shared"
       export HINT="nomultithread"
+      export SHARED=1
+      export HT=0
       source ${SLURM_SUBMIT_DIR}/bash_scripts/consecutive.sh
 
     else
