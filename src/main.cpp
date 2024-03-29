@@ -60,8 +60,9 @@ using std::endl;
 #include "TestCG.hpp"
 #include "TestSymmetry.hpp"
 #include "TestNorms.hpp"
+#include "adios2_c.h"
 
-#define MAXITER 1 // arbitrary value to set number of compute loops
+#define MAXITER 10 // arbitrary value to set number of compute loops
 #define SIZE_PER_ROW 27 // value according to generateProblem.cpp 
 // Addition of iocomp header files 
 /*!
@@ -350,88 +351,54 @@ int main(int argc, char * argv[]) {
 	testnorms_data.values = new double[numberOfCgSets];
 
 	/* iocomp - define variables */ 
-	double startTime[numberOfCgSets]; 
 	double loopTime[numberOfCgSets]; 
 	double waitTime[numberOfCgSets]; 
 	double compTime[numberOfCgSets]; 
 	double sendTime[numberOfCgSets]; 
-	double sendTimeMatrix[numberOfCgSets]; 
-	double waitTimeMatrix[numberOfCgSets]; 
 	double wallTime; 
-	MPI_Request requestMatrix; 
-	// size_t superMatrix_localSize = nrow*SIZE_PER_ROW; 
+	MPI_Request requestMatrix;
+
+	// extensions for IO libraries
+	char ext[5][5] = {".dat", ".h5", ".h5", "", ""}; 
 	
 	char fileName[50]; // to avoid the C++ to C const char[] to char* warning 
 
-	/*
-	 * make a super matrix with dimensions nrow which is the local number of rows (nx * ny* nz) 
-	 * and SIZE_PER_ROW is defined based on value given in generateProblem
-	 * and flatten array
-	 */ 
-	// double* superMatrix = (double*)malloc(superMatrix_localSize*sizeof(double)); 
-	// double* superMatrix = NULL; 
-	// winInits(&iocompParams, superMatrix_localSize);
-	// std::cout<<"after win inits with local size "<<superMatrix_localSize<<std::endl;
-	// superMatrix = iocompParams.array[0]; 
-	// std::cout<<"after matrix allocated"<<std::endl;
-	
-//	// initialise matrix and synchronise this array only if shared array 
-//	if(iocompParams.sharedFlag)
-//	{
-//		winActivateInfo(&iocompParams, superMatrix);
-//		preDataSend(&iocompParams, superMatrix, fileName); 
-//		for(int i = 0; i < nrow; i++)
-//		{
-//			for(int j =0 ; j < SIZE_PER_ROW; j++)
-//			{
-//				superMatrix[i*SIZE_PER_ROW + j] = A.matrixValues[i][j]; 
-//			} 
-//		}
-//		dataSend(superMatrix, &iocompParams, &requestMatrix, superMatrix_localSize); 
-//		dataWait(&iocompParams,&requestMatrix, superMatrix, fileName);  
-//		// preDataSend(&iocompParams, superMatrix); 
-//		dataSendInfo(&iocompParams); 
-//	} 
-//	std::cout<<"Before CG loop"<<std::endl;
-
 	for (int i=0; i< numberOfCgSets; ++i) {
 		loopTime[i] = MPI_Wtime(); // iocomp - start loop timer 	
-			
-		// iocomp - send the matrix first  
+
+		// iocomp - activate windows in case of shared memory 
 		winActivateInfo(&iocompParams, x.values); 
-		snprintf(fileName, sizeof(fileName), "x_%i", i); 
+		snprintf(fileName, sizeof(fileName), "x_%i%s", i, ext[iocompParams.ioLibNum]); 
 		preDataSend(&iocompParams, x.values, fileName); 
 
-		sendTimeMatrix[i] = MPI_Wtime(); // iocomp - start send timer 
-		dataSend(x.values, &iocompParams, &requestMatrix, nrow); // local number of rows defined in nrow
-		sendTimeMatrix[i] = MPI_Wtime() - sendTimeMatrix[i]; // iocomp - end send timer 
-
-		// HPCG compute loop + MPI test for matrix 
+		// HPCG compute loop and record compute time 
 		compTime[i] = MPI_Wtime(); // iocomp - start computational timer 
 		ZeroVector(x); // Zero out x
 		
-		dataSendTest(&iocompParams,&requestMatrix, x.values); // iocomp - test data sends  
-		winTestInfo(&iocompParams, x.values);
-		// preDataSend(&iocompParams, superMatrix); 
-		dataSendInfo(&iocompParams); 
-
 		ierr = CG( A, data, b, x, optMaxIters, optTolerance, niters, normr, normr0, &times[0], true);
-		compTime[i] = MPI_Wtime() - compTime[i]; // iocomp - end computational timer 
-	
-		// iocomp - wait for matrix data to be sent fully 
-		waitTimeMatrix[i] = MPI_Wtime(); // iocomp - start wait timer 
-		dataWait(&iocompParams,&requestMatrix, x.values, fileName);  
-		// preDataSend(&iocompParams, superMatrix); 
-		dataSendInfo(&iocompParams); 
-		waitTimeMatrix[i] = MPI_Wtime() - waitTimeMatrix[i]; // iocomp - end wait timer 
+		compTime[i] = MPI_Wtime() - compTime[i];  
 
+		// iocomp - send data/post win complete and record times send times
+		sendTime[i] = MPI_Wtime();  
+		dataSend(x.values, &iocompParams, &requestMatrix, nrow); 
+		sendTime[i] = MPI_Wtime() - sendTime[i];  
+	
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
-		
-		sendTime[i] = sendTimeMatrix[i];   
-		waitTime[i] = waitTimeMatrix[i]; 
+
+		// iocomp - test data sends
+		dataSendTest(&iocompParams, &requestMatrix, x.values);   
+		winTestInfo(&iocompParams, x.values);
+		dataSendInfo(&iocompParams); 
+
+		// iocomp - wait for matrix data to be sent fully and record timers
+		waitTime[i] = MPI_Wtime();  
+		dataWait(&iocompParams,&requestMatrix, x.values, fileName);  
+		dataSendInfo(&iocompParams); 
+		waitTime[i] = MPI_Wtime() - waitTime[i]; // iocomp - end wait timer 
+
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
 	}
 
@@ -503,7 +470,6 @@ int main(int argc, char * argv[]) {
 	delete [] testnorms_data.values;
 
 	HPCG_Finalize();
-	printf("after HPCG finalise \n"); 
 	
 #ifndef HPCG_NO_MPI
 	MPI_Finalize();
