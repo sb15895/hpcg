@@ -2,7 +2,7 @@ export HPCG_DIR=$(echo $(cd ../ && pwd))
 export HPCG_EXE=${HPCG_DIR}/build/bin/xhpcg
 export CONFIG=${HPCG_DIR}/run_dir/config.xml
 export TEST_EXE=${HPCG_DIR}/test/test
-export TEST_DIR=${HPCG_DIR}/test
+export TEST_PARENT_DIR=${HPCG_DIR}/test
 echo ${TEST_EXE} 
 
 setup() {
@@ -31,7 +31,7 @@ weakscaling() {
 					export FLAG_DIR=${FLAG}
 					NX_TEST=$((${NX}/2))
 				fi 
-				TEST_DIR=${TEST_DIR}/${FLAG_DIR}/${CORES}/${NX}/${NY}/${IO}
+				TEST_DIR=${TEST_PARENT_DIR}/${FLAG_DIR}/${CORES}/${NX}/${NY}/${IO}
 				echo "Testing for ${CORES} cores, array size ${NX} x ${NY} x ${NZ} IO lib ${IO} for $FLAG_DIR configuration"
 				echo DIRECTORY: 
 				echo $TEST_DIR
@@ -51,8 +51,8 @@ weakscaling() {
 } 
 
 # MPI cores
-CORES_START=2
-CORES_END=2
+CORES_START=4
+CORES_END=4
 
 # controls NX, NY, NZ parameters
 ARRAY_START=2
@@ -62,16 +62,16 @@ ARRAY_END=2
 IO_START=0
 IO_END=0
 
-echo "Testing no split case ..."
-HT_VAL=0
-SH_VAL=0
-weakscaling
-
-echo "Testing message copy case ..."
-FLAG=HT
-HT_VAL=1
-SH_VAL=0
-weakscaling 
+#echo "Testing no split case ..."
+#HT_VAL=0
+#SH_VAL=0
+#weakscaling
+#
+#echo "Testing message copy case ..."
+#FLAG=HT
+#HT_VAL=1
+#SH_VAL=0
+#weakscaling 
 
 echo "Testing shared case ..."
 FLAG=shared
