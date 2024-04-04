@@ -380,23 +380,29 @@ int main(int argc, char * argv[]) {
 
 		// iocomp - send data/post win complete and record times send times
 		sendTime[i] = MPI_Wtime();  
-		dataSend(x.values, &iocompParams, &requestMatrix, nrow); 
+		dataSend(x.values, &iocompParams, &requestMatrix, nrow, fileName); 
 		sendTime[i] = MPI_Wtime() - sendTime[i];  
 	
 		if (ierr) HPCG_fout << "Error in call to CG: " << ierr << ".\n" << endl;
 
 		if (rank==0) HPCG_fout << "Call [" << i << "] Scaled Residual [" << normr/normr0 << "]" << endl;
 		testnorms_data.values[i] = normr/normr0; // Record scaled residual from this run
-
+		
 		// iocomp - test data sends
 		dataSendTest(&iocompParams, &requestMatrix, x.values);   
-		winTestInfo(&iocompParams, x.values);
-		dataSendInfo(&iocompParams); 
+
+		//printf("HPCG - before wintest \n"); 
+		//winTestInfo(&iocompParams, x.values);
+		//dataSendInfo(&iocompParams); 
+		//printf("HPCG - after wintest \n"); 
 
 		// iocomp - wait for matrix data to be sent fully and record timers
 		waitTime[i] = MPI_Wtime();  
 		dataWait(&iocompParams,&requestMatrix, x.values, fileName);  
-		dataSendInfo(&iocompParams); 
+
+		//printf("HPCG - before data send info \n"); 
+		//dataSendInfo(&iocompParams); 
+		//printf("HPCG - after data send info \n"); 
 		waitTime[i] = MPI_Wtime() - waitTime[i]; // iocomp - end wait timer 
 
 		loopTime[i] = MPI_Wtime() - loopTime[i]; // iocomp - loop timer end 
